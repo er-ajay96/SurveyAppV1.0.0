@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Electrical Line Survey V2.0</title>
+<title>Electrical Line Survey V2.1</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
@@ -397,7 +397,7 @@ text-align: center;
 <div class="header-left">
 <div class="icon-box">⚡</div>
 <div class="title-section">
-<h1>Electrical Line Survey V2.0</h1>
+<h1>Electrical Line Survey V2.1</h1>
 <p>GPS-based line tracking & mapping</p>
 </div>
 </div>
@@ -517,7 +517,7 @@ text-align: center;
 
 </div> 
 <div class="footer-info">
-<p>Electrical Line Survey App | Version 2.0</p>
+<p>Electrical Line Survey App | Version 2.1</p>
 <p>Developed for Professional Field Use | For Support: +91-70187-56182/ErAjay.HPSEB@gmail.com</p>
 </div>
 
@@ -526,20 +526,21 @@ text-align: center;
 <script>
 // State
 let isTracking = false;
+let isManualPosition = false; // NEW: Flag for manual position override
 let linePoints = []; // Stores all raw GPS points (actual path)
 let markers = []; // Stores key marked points (for line calculation)
 let totalDistance = 0;
 let currentPosition = null;
 let siteName = document.getElementById('siteNameInput').value; // Initialize from input
 let selectedMarkerType = 'pole';
-let selectedPoleType = 'HT'; // New state for selected pole type
+let selectedPoleType = 'HT'; // New state for selected pole type (V2.0)
 let accuracy = null;
 let watchId = null;
 
 // Leaflet Map State
 let leafletMapInstance = null;
 let leafletMarkers = [];
-let leafletPolylines = []; // Changed to array for segmented lines
+let leafletPolylines = []; // Changed to array for segmented lines (V2.0)
 let mapTiles = null;
 let satelliteTiles = null;
 
@@ -557,10 +558,10 @@ const markerTypes = {
 pole: { label: 'Pole', icon: '⚡', color: '#3b82f6' },
 dtr: { label: 'DTR', icon: '🔌', color: '#ef4444' },
 structure: { label: 'Structure', icon: '🏗️', color: '#f59e0b' },
-other: { label: 'Other', icon: '❓', color: '#6b7280' }
+other: { label: 'Other', icon: '❓', color: '#6b7280' } // V2.0 Addition
 };
 
-// New Pole Type definitions for span color coding (Requirement 1 & 2)
+// New Pole Type definitions for span color coding (V2.0)
 const poleTypes = {
 'HT': { label: 'HT (High Tension)', color: '#dc2626' }, // Red
 'LT-1P': { label: 'LT 1-phase', color: '#2563eb' }, // Blue
@@ -591,10 +592,9 @@ return R * c;
 // Helper function to update total distance based on straight line between markers
 function updateTotalDistance() {
 totalDistance = 0;
-// Also update span lengths on markers
 if (markers.length >= 2) {
 for (let i = 1; i < markers.length; i++) {
-// Check if a line break exists between the two markers
+// Check if a line break exists between the two markers (V2.0)
 if (!markers[i-1].isLineBreak) {
 const dist = calculateDistance(
 markers[i-1].lat, markers[i-1].lng,
@@ -617,7 +617,7 @@ markers[0].spanLength = 0;
 function updateSiteName(name) {
 siteName = name;
 drawMap();
-updateUI(); // Refreshes Leaflet Map
+updateUI(); 
 }
 
 function startTracking() {
@@ -627,6 +627,7 @@ return;
 }
 
 isTracking = true;
+isManualPosition = false; // Reset manual position flag
 initialFixAttempt = true;
 document.getElementById('startBtn').style.display = 'none';
 document.getElementById('stopBtn').style.display = 'flex';
@@ -640,7 +641,7 @@ if (initialFixAttempt) {
 gpsStatusElement.textContent = 'Warning: Low accuracy after 30 seconds. Proceeding with current accuracy.';
 gpsStatusElement.style.color = '#dc2626';
 document.getElementById('addMarkerBtn').disabled = false;
-initialFixAttempt = false; // Stop checking for the initial fix
+initialFixAttempt = false; 
 }
 }, INITIAL_FIX_TIMEOUT);
 
@@ -649,7 +650,7 @@ watchId = navigator.geolocation.watchPosition(
 (position) => {
 accuracy = position.coords.accuracy;
 
-// 1. Initial Fix Check (Only for the first good position)
+// 1. Initial Fix Check
 if (initialFixAttempt) {
 if (accuracy <= ACCURACY_THRESHOLD) {
 clearTimeout(initialFixTimeoutId);
@@ -658,14 +659,13 @@ document.getElementById('addMarkerBtn').disabled = false;
 gpsStatusElement.textContent = `GPS Fix Achieved: ±${accuracy.toFixed(1)}m`;
 gpsStatusElement.style.color = '#10b981';
 } else {
-// Update status while waiting
 gpsStatusElement.textContent = `Searching for high-accuracy GPS fix... (Current: ±${accuracy.toFixed(1)}m)`;
-updateUI(); // Update accuracy display even if point is skipped
+updateUI(); 
 return; 
 }
 }
 
-// 2. Accuracy Filter (For all subsequent points)
+// 2. Accuracy Filter
 if (accuracy > MAX_ACCURACY_ERROR) {
 console.warn('Point skipped due to poor accuracy:', accuracy.toFixed(1) + 'm');
 updateUI();
@@ -700,15 +700,15 @@ linePoints.push(newPoint);
 updateTotalDistance(); 
 
 updateUI();
-drawMap(); // Schematic Map
-drawLeafletMap(); // Interactive Map
+drawMap(); 
+drawLeafletMap(); 
 },
 (error) => {
 console.error('Error getting location:', error);
 gpsStatusElement.textContent = `GPS Error: ${error.message}`;
 gpsStatusElement.style.color = '#dc2626';
 alert('Error getting location. Please enable GPS.');
-stopTracking(); // Stop tracking on error
+stopTracking(); 
 },
 {
 enableHighAccuracy: true,
@@ -726,6 +726,7 @@ watchId = null;
 clearTimeout(initialFixTimeoutId);
 initialFixAttempt = false;
 isTracking = false;
+isManualPosition = false; // Reset manual position flag
 document.getElementById('startBtn').style.display = 'flex';
 document.getElementById('stopBtn').style.display = 'none';
 document.getElementById('addMarkerBtn').disabled = true;
@@ -741,7 +742,7 @@ btn.classList.remove('active');
 event.target.closest('.marker-btn').classList.add('active');
 document.getElementById('markerTypeLabel').textContent = markerTypes[type].label;
 
-// Show/Hide Pole Type selection based on marker type
+// Show/Hide Pole Type selection based on marker type (V2.0)
 poleTypeContainer.style.display = (type === 'pole' || type === 'dtr') ? 'block' : 'none';
 }
 
@@ -751,20 +752,48 @@ selectedPoleType = event.target.value;
 }
 }
 
-// New function to mark a line break (Requirement 4)
+// V2.0: Function to mark a line break
 function breakLineContinuity() {
 if (markers.length > 0) {
-// Mark the last marker as the end of a segment
-// The next marker added will check for this flag on the previous marker
-// to set its spanLength to 0 and skip drawing a line segment.
 markers[markers.length - 1].isLineBreak = true;
 updateMarkersList();
-alert('Line continuity broken. Next marker will start a new segment.');
-} else {
-alert('No markers to break line from.');
-}
+// Don't alert here, as it's called by startFromMarker as well.
+} 
 }
 
+// V2.1: Function to start the line from a specific marker (manual position override)
+function startFromMarker(id) {
+    const marker = markers.find(m => m.id == id);
+    if (!marker) return;
+
+    // 1. Stop live GPS feed
+    if (isTracking) {
+        stopTracking();
+    }
+    
+    // 2. Set the current position to the marker's coordinates
+    currentPosition = {
+        lat: marker.lat,
+        lng: marker.lng,
+        timestamp: Date.now()
+    };
+    isManualPosition = true; // Flag this as a fixed, manual position
+    accuracy = 0.0; // Fixed point accuracy
+
+    // 3. Ensure continuity is broken from the previous line end
+    breakLineContinuity(); 
+
+    // 4. Update UI
+    document.getElementById('addMarkerBtn').disabled = false;
+    gpsStatusElement.textContent = `Manual Start: New line segment started from Marker #${markers.findIndex(m => m.id == id) + 1}. Click 'Add Pole' to continue.`;
+    gpsStatusElement.style.color = '#a855f7'; 
+
+    updateUI();
+    drawMap(); 
+    drawLeafletMap(); 
+    
+    alert(`Successfully set current position to Marker #${markers.findIndex(m => m.id == id) + 1}. The next point you add will automatically start a new line segment from here.`);
+}
 
 function addMarker() {
 if (!currentPosition) {
@@ -772,7 +801,7 @@ alert('Waiting for GPS position...');
 return;
 }
 
-if (initialFixAttempt) {
+if (initialFixAttempt && !isManualPosition) {
 alert('Please wait for an accurate GPS fix before adding the first marker.');
 return;
 }
@@ -780,13 +809,13 @@ return;
 const newMarker = {
 id: Date.now(),
 type: selectedMarkerType,
-// Add new poleType property
+// Add new poleType property (V2.0)
 poleType: (selectedMarkerType === 'pole' || selectedMarkerType === 'dtr') ? selectedPoleType : null,
 lat: currentPosition.lat,
 lng: currentPosition.lng,
 timestamp: Date.now(),
 spanLength: 0, // Will be updated by updateTotalDistance
-isLineBreak: false // New property for line continuity
+isLineBreak: false // New property for line continuity (V2.0)
 };
 
 markers.push(newMarker);
@@ -795,6 +824,17 @@ updateUI();
 drawMap();
 drawLeafletMap();
 updateMarkersList();
+
+// If in manual mode, stop showing the manual point after adding the marker
+if (isManualPosition) {
+    isManualPosition = false;
+    currentPosition = null;
+    gpsStatusElement.textContent = `Manual segment point added. Tracking stopped. Click 'Start Tracking' to resume GPS feed or select another saved point.`;
+    gpsStatusElement.style.color = '#6b7280';
+    document.getElementById('addMarkerBtn').disabled = true;
+    drawMap(); 
+    drawLeafletMap();
+}
 }
 
 function clearAll() {
@@ -808,7 +848,7 @@ siteName = 'New Survey Site';
 document.getElementById('siteNameInput').value = siteName;
 updateUI();
 drawMap();
-drawLeafletMap(); // Clear Leaflet map
+drawLeafletMap(); 
 updateMarkersList();
 gpsStatusElement.textContent = '';
 }
@@ -839,6 +879,12 @@ const type = markerTypes[marker.type];
 const poleTypeInfo = marker.poleType ? `(${poleTypes[marker.poleType].label})` : '';
 const spanText = (idx > 0 && marker.spanLength) ? `<span class="span-length">${marker.spanLength.toFixed(0)}m Span</span>` : (marker.isLineBreak ? '<span class="span-length" style="color:#dc2626;">Line Broken</span>' : '');
 
+const item = document.createElement('div');
+item.className = 'marker-item';
+
+// V2.1: Add "Start From Here" button
+const startBtn = `<button class="btn btn-purple" style="padding: 5px 10px; font-size: 12px; height: 32px; margin-right: 8px; width: auto;" onclick="startFromMarker(${marker.id})">Start From Here</button>`;
+
 item.innerHTML = `
 <div class="marker-info">
 <div class="marker-item-icon">${type.icon}</div>
@@ -847,7 +893,10 @@ item.innerHTML = `
 <div class="marker-coords">${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}</div>
 </div>
 </div>
+<div style="display:flex; align-items:center;">
+${startBtn}
 <button class="delete-btn" onclick="deleteMarker(${marker.id})">🗑️</button>
+</div>
 `;
 list.appendChild(item);
 });
@@ -875,7 +924,7 @@ const newLng = lng + (dx / (R * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI
 return { lat: newLat, lng: newLng };
 }
 
-// --- Schematic Map (Canvas) Function ---
+// --- Schematic Map (Canvas) Function (Updated for V2.0/V2.1) ---
 function drawMap() {
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
@@ -896,6 +945,11 @@ ctx.fillText(`Site: ${siteName}`, 10, 25);
 
 // Use both markers and linePoints to determine the map bounds
 const pointsForBounds = [...markers, ...linePoints];
+
+if (currentPosition && isManualPosition) {
+    pointsForBounds.push(currentPosition);
+}
+
 
 if (pointsForBounds.length === 0) {
 ctx.fillStyle = '#64748b';
@@ -984,12 +1038,12 @@ for (let i = 1; i < markers.length; i++) {
 const prevMarker = markers[i - 1];
 const currentMarker = markers[i];
 
-// Check for line break
+// Check for line break (V2.0)
 if (prevMarker.isLineBreak) {
-continue; // Skip drawing this segment
+continue; 
 }
 
-// Determine span color based on the current marker's poleType (Requirement 3)
+// Determine span color based on the current marker's poleType (V2.0 Requirement 3)
 let spanColor = '#3b82f6'; // Default Blue
 if (currentMarker.type === 'pole' || currentMarker.type === 'dtr') {
 spanColor = poleTypes[currentMarker.poleType] ? poleTypes[currentMarker.poleType].color : '#3b82f6';
@@ -1011,7 +1065,7 @@ const x = toX(marker.lng);
 const y = toY(marker.lat);
 const markerNumber = idx + 1;
 
-// Determine marker color (use pole type color if applicable)
+// Determine marker color (use pole type color if applicable) (V2.0)
 let markerColor = type.color;
 let poleTypeLabel = '';
 if (marker.type === 'pole' || marker.type === 'dtr') {
@@ -1041,7 +1095,7 @@ ctx.textBaseline = 'top';
 ctx.fillText(markerNumber, x + 18, y - 10);
 
 
-// Draw Span Length (on line segment, only for markers 2 and up and not a line break)
+// Draw Span Length (on line segment, only for markers 2 and up and not a line break) (V2.0)
 if (idx > 0 && marker.spanLength > 0) {
 const prevMarker = markers[idx - 1];
 const prevX = toX(prevMarker.lng);
@@ -1058,7 +1112,7 @@ spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b
 
 // Draw a background box for the text to improve readability over the line
 ctx.fillStyle = '#ffffff';
-ctx.fillRect(midX - 25, midY - 10, 50, 20); // Adjust size as needed
+ctx.fillRect(midX - 25, midY - 10, 50, 20); 
 
 ctx.fillStyle = spanColor;
 ctx.font = 'bold 12px Arial';
@@ -1073,19 +1127,38 @@ if (currentPosition) {
 const x = toX(currentPosition.lng);
 const y = toY(currentPosition.lat);
 
-ctx.fillStyle = '#10b981';
-ctx.beginPath();
-ctx.arc(x, y, 8, 0, Math.PI * 2);
-ctx.fill();
+// V2.1: Change color/style for manual position
+if (isManualPosition) {
+    ctx.fillStyle = '#a855f7'; // Purple for manual start point
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
 
-ctx.strokeStyle = '#ffffff';
-ctx.lineWidth = 2;
-ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px Arial';
+    ctx.fillText('START', x, y + 1); // Text overlay
+    
+} else {
+    // Original GPS Position style
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
 }
 }
 
 
-// --- Leaflet Map Functions ---
+// --- Leaflet Map Functions (Updated for V2.0/V2.1) ---
 
 function initLeafletMap() {
 // Determine the initial center point
@@ -1108,24 +1181,20 @@ leafletMapInstance = L.map('leafletMap').setView([centerLat, centerLng], 15);
 
 // 2. Define Tile Layers (Map Styles)
 
-// Esri World Imagery (Satellite/Hybrid) for the "Traffic Map" look
 satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 }).addTo(leafletMapInstance);
 
-// OpenStreetMap Standard Tiles (Optional, good fallback)
 mapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 });
 
-// Create a base map control for switching between map styles (optional but helpful)
 const baseMaps = {
 "Satellite View": satelliteTiles,
 "Street Map": mapTiles
 };
 L.control.layers(baseMaps).addTo(leafletMapInstance);
 
-// Initial draw
 drawLeafletMap();
 }
 
@@ -1141,7 +1210,7 @@ leafletMarkers = [];
 leafletPolylines.forEach(p => p.remove());
 leafletPolylines = [];
 
-// 2. Draw the main line (Polyline Segments)
+// 2. Draw the main line (Polyline Segments) (V2.0)
 let segmentCoordinates = [];
 let currentSegmentColor = '#3b82f6'; // Default color
 
@@ -1153,10 +1222,9 @@ const prevMarker = markers[i - 1];
 
 // Check if a segment should be drawn
 if (!prevMarker.isLineBreak) {
-// Segment is between previous marker and current marker
 segmentCoordinates.push([marker.lat, marker.lng]);
 
-// Determine span color based on the current marker's poleType (Requirement 3)
+// Determine span color based on the current marker's poleType 
 let nextSegmentColor = '#3b82f6';
 if (marker.type === 'pole' || marker.type === 'dtr') {
 nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
@@ -1165,7 +1233,7 @@ nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color
 // If segment color is changing or this is the last marker, draw the segment
 if (nextSegmentColor !== currentSegmentColor || i === markers.length - 1) {
 const polyline = L.polyline(segmentCoordinates, {
-color: currentSegmentColor, // Color of the segment ending at this point
+color: currentSegmentColor, 
 weight: 4,
 opacity: 1.0,
 dashArray: '8, 8'
@@ -1251,7 +1319,34 @@ ${spanText}
 leafletMarkers.push(lMarker);
 });
 
-// 4. Center and zoom the map to fit all markers
+
+// 4. Draw Current Position (V2.1)
+if (currentPosition) {
+    let currentMarker;
+    if (isManualPosition) {
+        // Use a different icon for manual override
+        currentMarker = L.circleMarker([currentPosition.lat, currentPosition.lng], {
+            radius: 8,
+            color: '#a855f7', // Purple
+            fillColor: '#a855f7',
+            fillOpacity: 1,
+            weight: 3
+        }).bindPopup('Manual Start Location').addTo(leafletMapInstance);
+    } else {
+        // Use default green circle for live GPS
+        currentMarker = L.circleMarker([currentPosition.lat, currentPosition.lng], {
+            radius: 5,
+            color: '#ffffff',
+            fillColor: '#10b981',
+            fillOpacity: 1,
+            weight: 2
+        }).bindPopup(`Live GPS: ±${accuracy.toFixed(1)}m`).addTo(leafletMapInstance);
+    }
+    leafletMarkers.push(currentMarker); // Add to list for easy removal/clearing
+}
+
+
+// 5. Center and zoom the map to fit all markers
 if (markers.length > 0) {
 const allLatLngs = markers.map(m => [m.lat, m.lng]);
 if (allLatLngs.length > 1) {
@@ -1267,7 +1362,7 @@ leafletMapInstance.setView(allLatLngs[0], 17);
 
 function saveToJSON() {
 const data = {
-version: '2.0', // Updated version number
+version: '2.1', // Updated version number
 created: new Date().toISOString(),
 siteName: siteName, 
 totalDistance: totalDistance, 
@@ -1286,7 +1381,7 @@ const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v2-${Date.now()}.json`;
+a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v2-1-${Date.now()}.json`;
 a.click();
 URL.revokeObjectURL(url);
 }
@@ -1306,18 +1401,18 @@ markers = (data.markers || []).map(m => ({
 ...m,
 spanLength: m.spanLength ? parseFloat(m.spanLength) : 0,
 type: m.type || 'pole',
-poleType: m.poleType || 'HT', // Default to HT if not present (V1.0 backward compatibility)
-isLineBreak: m.isLineBreak || false, // Default to false if not present (V1.0 backward compatibility)
+poleType: m.poleType || (m.type === 'pole' || m.type === 'dtr' ? 'HT' : null), // Default poleType
+isLineBreak: m.isLineBreak || false, 
 lat: m.lat,
 lng: m.lng
 })); 
 siteName = data.siteName || 'New Survey Site'; 
 document.getElementById('siteNameInput').value = siteName; 
 
-updateTotalDistance(); // Recalculate distance and spans based on loaded data
+updateTotalDistance(); 
 updateUI();
 drawMap();
-drawLeafletMap(); // Initialize/refresh Leaflet map
+drawLeafletMap(); 
 updateMarkersList();
 alert(`Survey data loaded successfully! (Version: ${data.version || '1.0'})`);
 } catch (error) {
@@ -1341,7 +1436,7 @@ pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
 
 pdfCtx.fillStyle = '#000000';
 pdfCtx.font = 'bold 24px Arial';
-pdfCtx.fillText('Electrical Line Survey Report (V2.0)', 50, 40);
+pdfCtx.fillText('Electrical Line Survey Report (V2.1)', 50, 40);
 
 pdfCtx.font = '14px Arial';
 pdfCtx.fillText(`Site Name: ${siteName}`, 50, 70); 
@@ -1366,7 +1461,7 @@ pdfCtx.fillText(type.label, 600, legendY - 5);
 legendY += 30;
 });
 
-// Span Color Legend
+// Span Color Legend (V2.0)
 pdfCtx.font = 'bold 16px Arial';
 pdfCtx.fillText('Span Color Legend (Line Type to End Marker):', 50, 710);
 let spanLegendY = 740;
@@ -1405,7 +1500,7 @@ pdfCtx.fillStyle = '#6b7280';
 pdfCtx.font = '10px Arial';
 pdfCtx.textAlign = 'center';
 pdfCtx.fillText(
-'Developed for Professional Field Use | Survey App Version 2.0 | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com]',
+'Developed for Professional Field Use | Survey App Version 2.1 | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com]',
 pdfCanvas.width / 2,
 980 
 );
@@ -1414,7 +1509,7 @@ pdfCanvas.toBlob((blob) => {
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v2-${Date.now()}.png`;
+a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v2-1-${Date.now()}.png`;
 a.click();
 URL.revokeObjectURL(url);
 alert('Report exported successfully as PNG image!');
@@ -1430,3 +1525,4 @@ selectMarkerType(selectedMarkerType);
 
 </body>
 </html>
+
