@@ -1,394 +1,68 @@
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Electrical Line Survey V2.0</title>
-
+<title>Electrical Line Survey V2.0 — Updated</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
 <style>
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-}
-
-body {
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-background: linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%);
-min-height: 100vh;
-padding: 16px;
-padding-bottom: 60px; /* Space for the footer */
-}
-
-.container {
-max-width: 1200px;
-margin: 0 auto;
-}
-
-.card {
-background: white;
-border-radius: 16px;
-box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-padding: 24px;
-margin-bottom: 24px;
-}
-
-.header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-margin-bottom: 20px;
-flex-wrap: wrap;
-gap: 16px;
-}
-
-.header-left {
-display: flex;
-align-items: center;
-gap: 16px;
-}
-
-.icon-box {
-background: #3b82f6;
-padding: 12px;
-border-radius: 12px;
-color: white;
-font-size: 28px;
-}
-
-.title-section h1 {
-font-size: 24px;
-color: #1f2937;
-margin-bottom: 4px;
-}
-
-.title-section p {
-font-size: 14px;
-color: #6b7280;
-}
-
-.distance-display {
-text-align: right;
-}
-
-.distance-value {
-font-size: 32px;
-font-weight: bold;
-color: #3b82f6;
-}
-
-.distance-label {
-font-size: 14px;
-color: #6b7280;
-}
-
-.stats-grid {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 16px;
-margin-top: 20px;
-}
-
-.stat-card {
-padding: 16px;
-border-radius: 12px;
-}
-
-.stat-card.blue { background: #eff6ff; }
-.stat-card.green { background: #f0fdf4; }
-.stat-card.purple { background: #faf5ff; }
-
-.stat-label {
-font-size: 14px;
-color: #6b7280;
-margin-bottom: 4px;
-}
-
-.stat-value {
-font-size: 24px;
-font-weight: bold;
-}
-
-.stat-value.blue { color: #3b82f6; }
-.stat-value.green { color: #10b981; }
-.stat-value.purple { color: #a855f7; }
-
-.btn {
-padding: 12px 24px;
-border: none;
-border-radius: 12px;
-font-size: 16px;
-font-weight: 600;
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-transition: all 0.2s;
-width: 100%;
-}
-
-.btn:disabled {
-background: #d1d5db !important;
-color: #9ca3af !important;
-cursor: not-allowed;
-}
-
-.btn-green {
-background: #10b981;
-color: white;
-}
-
-.btn-green:hover:not(:disabled) {
-background: #059669;
-}
-
-.btn-red {
-background: #ef4444;
-color: white;
-}
-
-.btn-red:hover:not(:disabled) {
-background: #dc2626;
-}
-
-.btn-blue {
-background: #3b82f6;
-color: white;
-}
-
-.btn-blue:hover:not(:disabled) {
-background: #2563eb;
-}
-
-.btn-purple {
-background: #a855f7;
-color: white;
-}
-
-.btn-purple:hover:not(:disabled) {
-background: #9333ea;
-}
-
-/* Updated Marker Type Grid for 4 columns */
-.marker-types {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 12px;
-margin: 16px 0;
-}
-
-/* New Pole Type Selection */
-.pole-type-selection {
-margin-top: 12px;
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 8px;
-}
-
-.pole-type-selection label {
-display: flex;
-align-items: center;
-padding: 8px;
-border: 1px solid #d1d5db;
-border-radius: 8px;
-font-size: 14px;
-cursor: pointer;
-transition: background-color 0.2s;
-}
-
-.pole-type-selection input[type="radio"] {
-margin-right: 8px;
-accent-color: #3b82f6;
-}
-
-.pole-type-selection label:hover {
-background-color: #f3f4f6;
-}
-
-.marker-btn {
-padding: 16px;
-border: none;
-border-radius: 12px;
-background: #f3f4f6;
-cursor: pointer;
-transition: all 0.2s;
-font-weight: 600;
-}
-
-.marker-btn:hover {
-background: #e5e7eb;
-}
-
-.marker-btn.active {
-background: #3b82f6;
-color: white;
-}
-
-.marker-icon {
-font-size: 32px;
-margin-bottom: 8px;
-}
-
-.marker-label {
-font-size: 14px;
-}
-
-.button-grid {
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 12px;
-}
-
-canvas {
-width: 100%;
-border: 2px solid #e5e7eb;
-border-radius: 12px;
-}
-
-.markers-list {
-max-height: 300px;
-overflow-y: auto;
-}
-
-.marker-item {
-display: flex;
-align-items: center;
-justify-content: space-between;
-background: #f9fafb;
-padding: 12px;
-border-radius: 12px;
-margin-bottom: 8px;
-}
-
-.marker-info {
-display: flex;
-align-items: center;
-gap: 12px;
-}
-
-.marker-item-icon {
-font-size: 24px;
-}
-
-.marker-details h4 {
-font-size: 16px;
-color: #1f2937;
-margin-bottom: 4px;
-}
-
-.marker-coords {
-font-size: 12px;
-color: #6b7280;
-}
-
-.span-length {
-font-size: 12px;
-font-weight: bold;
-color: #3b82f6;
-margin-left: 8px;
-}
-
-.delete-btn {
-background: #fee2e2;
-color: #ef4444;
-border: none;
-padding: 8px;
-border-radius: 8px;
-cursor: pointer;
-transition: all 0.2s;
-}
-
-.delete-btn:hover {
-background: #fecaca;
-}
-
-h2 {
-font-size: 18px;
-color: #1f2937;
-margin-bottom: 16px;
-}
-
-input[type="file"] {
-display: none;
-}
-
-label.btn {
-cursor: pointer;
-}
-
-/* New style for site name input */
-.text-input-group {
-margin-bottom: 20px;
-}
-
-.text-input-group label {
-display: block; 
-font-weight: 600; 
-margin-bottom: 8px; 
-color: #374151;
-}
-
-.text-input-group input {
-width: 100%; 
-padding: 12px; 
-border: 1px solid #d1d5db; 
-border-radius: 8px; 
-font-size: 16px;
-}
-
-/* Developer Footer Styles */
-.footer-info {
-text-align: center;
-padding: 20px 0;
-font-size: 12px;
-color: #6b7280;
-margin-top: 24px;
-border-top: 1px solid #e5e7eb;
-}
-.footer-info p {
-margin: 4px 0;
-}
-
-/* Style for Leaflet Map container */
-#leafletMap {
-height: 500px; 
-width: 100%;
-border: 2px solid #e5e7eb;
-border-radius: 12px;
-}
-
-
-@media (max-width: 768px) {
-.stats-grid {
-grid-template-columns: 1fr;
-}
-
-.marker-types {
-grid-template-columns: repeat(2, 1fr); /* Adjust for smaller screens */
-}
-.pole-type-selection {
-grid-template-columns: 1fr;
-}
-
-.button-grid {
-grid-template-columns: 1fr;
-}
-
-.header {
-flex-direction: column;
-text-align: center;
-}
-
-.distance-display {
-text-align: center;
-}
-}
+/* (styles trimmed for brevity but kept similar to original) */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg,#e0f2fe 0%,#ddd6fe 100%); min-height:100vh; padding:16px; padding-bottom:60px; }
+.container{max-width:1200px;margin:0 auto;}
+.card{background:white;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.1);padding:24px;margin-bottom:24px;}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:16px;}
+.icon-box{background:#3b82f6;padding:12px;border-radius:12px;color:white;font-size:28px;}
+.title-section h1{font-size:24px;color:#1f2937;margin-bottom:4px;}
+.title-section p{font-size:14px;color:#6b7280;}
+.distance-display{text-align:right;}
+.distance-value{font-size:32px;font-weight:bold;color:#3b82f6;}
+.distance-label{font-size:14px;color:#6b7280;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px;}
+.stat-card{padding:16px;border-radius:12px;}
+.stat-card.blue{background:#eff6ff;}
+.stat-card.green{background:#f0fdf4;}
+.stat-card.purple{background:#faf5ff;}
+.stat-label{font-size:14px;color:#6b7280;margin-bottom:4px;}
+.stat-value{font-size:24px;font-weight:bold;}
+.stat-value.blue{color:#3b82f6;}
+.stat-value.green{color:#10b981;}
+.stat-value.purple{color:#a855f7;}
+.btn{padding:12px 24px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;width:100%;}
+.btn:disabled{background:#d1d5db !important;color:#9ca3af !important;cursor:not-allowed;}
+.btn-green{background:#10b981;color:white;}
+.btn-red{background:#ef4444;color:white;}
+.btn-blue{background:#3b82f6;color:white;}
+.btn-purple{background:#a855f7;color:white;}
+.marker-types{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;}
+.pole-type-selection{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.pole-type-selection label{display:flex;align-items:center;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;cursor:pointer;transition:background-color 0.2s;}
+.marker-btn{padding:16px;border:none;border-radius:12px;background:#f3f4f6;cursor:pointer;transition:all 0.2s;font-weight:600;}
+.marker-btn.active{background:#3b82f6;color:white;}
+.marker-icon{font-size:32px;margin-bottom:8px;}
+.marker-label{font-size:14px;}
+.button-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+canvas{width:100%;border:2px solid #e5e7eb;border-radius:12px;}
+.markers-list{max-height:300px;overflow-y:auto;}
+.marker-item{display:flex;align-items:center;justify-content:space-between;background:#f9fafb;padding:12px;border-radius:12px;margin-bottom:8px;}
+.marker-info{display:flex;align-items:center;gap:12px;}
+.marker-item-icon{font-size:24px;}
+.marker-details h4{font-size:16px;color:#1f2937;margin-bottom:4px;}
+.marker-coords{font-size:12px;color:#6b7280;}
+.span-length{font-size:12px;font-weight:bold;color:#3b82f6;margin-left:8px;}
+.delete-btn{background:#fee2e2;color:#ef4444;border:none;padding:8px;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+#leafletMap{height:500px;width:100%;border:2px solid #e5e7eb;border-radius:12px;}
+.text-input-group{margin-bottom:20px;}
+.text-input-group label{display:block;font-weight:600;margin-bottom:8px;color:#374151;}
+.text-input-group input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:16px;}
+.footer-info{text-align:center;padding:20px 0;font-size:12px;color:#6b7280;margin-top:24px;border-top:1px solid #e5e7eb;}
+.file-manager{display:flex;gap:8px;align-items:center;}
+.file-list-select{padding:8px;border-radius:8px;border:1px solid #d1d5db;background:#fff;}
+.small{padding:8px 12px;font-size:14px;border-radius:8px;}
+.warning{color:#dc2626;font-weight:700;}
+@media (max-width:768px){.stats-grid{grid-template-columns:1fr}.marker-types{grid-template-columns:repeat(2,1fr)}.pole-type-selection{grid-template-columns:1fr}.button-grid{grid-template-columns:1fr}.header{flex-direction:column;text-align:center}.distance-display{text-align:center}}
 </style>
-
 </head>
 <body>
 <div class="container">
@@ -397,7 +71,7 @@ text-align: center;
 <div class="header-left">
 <div class="icon-box">⚡</div>
 <div class="title-section">
-<h1>Electrical Line Survey V2.0</h1>
+<h1>Electrical Line Survey V2.0 — Updated</h1>
 <p>GPS-based line tracking & mapping</p>
 </div>
 </div>
@@ -408,60 +82,34 @@ text-align: center;
 </div>
 
 <div class="stats-grid">
-<div class="stat-card blue">
-<div class="stat-label">Points</div>
-<div class="stat-value blue" id="pointsCount">0</div>
-</div>
-<div class="stat-card green">
-<div class="stat-label">Markers</div>
-<div class="stat-value green" id="markersCount">0</div>
-</div>
-<div class="stat-card purple">
-<div class="stat-label">Accuracy</div>
-<div class="stat-value purple" id="accuracy">--</div>
-</div>
+<div class="stat-card blue"><div class="stat-label">Points</div><div class="stat-value blue" id="pointsCount">0</div></div>
+<div class="stat-card green"><div class="stat-label">Markers</div><div class="stat-value green" id="markersCount">0</div></div>
+<div class="stat-card purple"><div class="stat-label">Accuracy</div><div class="stat-value purple" id="accuracy">--</div></div>
 </div>
 </div>
 
 <div class="card">
 <h2>Controls</h2>
-
 <div class="text-input-group">
 <label for="siteNameInput">Site Name</label>
-<input type="text" id="siteNameInput" value="New Survey Site" oninput="updateSiteName(this.value)">
+<input type="text" id="siteNameInput" value="New Survey Site" oninput="onUserChange();" />
 </div>
 
-<button class="btn btn-green" id="startBtn" onclick="startTracking()">
-▶ Start Tracking
-</button>
-<button class="btn btn-red" id="stopBtn" onclick="stopTracking()" style="display:none;">
-⏹ Stop Tracking
-</button>
-<div id="gpsStatus" style="margin-top: 10px; color: #f97316; font-weight: 600;"></div> 
+<button class="btn btn-green" id="startBtn" onclick="startTracking()">▶ Start Tracking</button>
+<button class="btn btn-red" id="stopBtn" onclick="stopTracking()" style="display:none;">⏹ Stop Tracking</button>
+<div id="gpsStatus" style="margin-top:10px;color:#f97316;font-weight:600;"></div>
 
-<div style="margin-top: 20px;">
-<label style="display: block; font-weight: 600; margin-bottom: 12px; color: #374151;">Select Marker Type</label>
+<div style="margin-top:20px;">
+<label style="display:block;font-weight:600;margin-bottom:12px;color:#374151;">Select Marker Type</label>
 <div class="marker-types">
-<button class="marker-btn active" onclick="selectMarkerType('pole')">
-<div class="marker-icon">⚡</div>
-<div class="marker-label">Pole</div>
-</button>
-<button class="marker-btn" onclick="selectMarkerType('dtr')">
-<div class="marker-icon">🔌</div>
-<div class="marker-label">DTR</div>
-</button>
-<button class="marker-btn" onclick="selectMarkerType('structure')">
-<div class="marker-icon">🏗️</div>
-<div class="marker-label">Structure</div>
-</button>
-<button class="marker-btn" onclick="selectMarkerType('other')">
-<div class="marker-icon">❓</div>
-<div class="marker-label">Other</div>
-</button>
+<button class="marker-btn active" onclick="selectMarkerType('pole', event)"><div class="marker-icon">⚡</div><div class="marker-label">Pole</div></button>
+<button class="marker-btn" onclick="selectMarkerType('dtr', event)"><div class="marker-icon">🔌</div><div class="marker-label">DTR</div></button>
+<button class="marker-btn" onclick="selectMarkerType('structure', event)"><div class="marker-icon">🏗️</div><div class="marker-label">Structure</div></button>
+<button class="marker-btn" onclick="selectMarkerType('other', event)"><div class="marker-icon">❓</div><div class="marker-label">Other</div></button>
 </div>
 
 <div id="poleTypeContainer">
-<label style="display: block; font-weight: 600; margin-top: 12px; margin-bottom: 8px; color: #374151;">Select Pole Type (Required for Span Color)</label>
+<label style="display:block;font-weight:600;margin-top:12px;margin-bottom:8px;color:#374151;">Select Pole Type (Required for Span Color)</label>
 <div class="pole-type-selection" onchange="updateSelectedPoleType(event)">
 <label><input type="radio" name="poleType" value="HT" checked> HT (High Tension)</label>
 <label><input type="radio" name="poleType" value="LT-1P"> LT 1-phase</label>
@@ -469,17 +117,10 @@ text-align: center;
 <label><input type="radio" name="poleType" value="LT-3P"> LT 3-phase</label>
 </div>
 </div>
-
 </div>
 
-<button class="btn btn-blue" id="addMarkerBtn" onclick="addMarker()" disabled style="margin-top: 16px;">
-📍 Add <span id="markerTypeLabel">Pole</span> at Current Location
-</button>
-
-<button class="btn btn-purple" id="breakLineBtn" onclick="breakLineContinuity()" style="margin-top: 12px;">
-🔗 Break Line Continuity / Start New Segment
-</button>
-
+<button class="btn btn-blue" id="addMarkerBtn" onclick="addMarker()" disabled style="margin-top:16px;">📍 Add <span id="markerTypeLabel">Pole</span> at Current Location</button>
+<button class="btn btn-purple" id="breakLineBtn" onclick="breakLineContinuity()" style="margin-top:12px;">🔗 Break Line Continuity / Start New Segment</button>
 </div>
 
 <div class="card">
@@ -491,22 +132,36 @@ text-align: center;
 <h2>Interactive Map View (Leaflet/OSM)</h2>
 <div id="leafletMap"></div>
 </div>
+
 <div class="card">
-<h2>Actions</h2>
-<div class="button-grid">
-<button class="btn btn-green" onclick="saveToJSON()">
-💾 Save JSON
-</button>
-<label class="btn btn-blue">
-📤 Load JSON
-<input type="file" accept=".json" onchange="loadFromJSON(event)">
+<h2>Actions & Saved Files</h2>
+<div class="button-grid" style="grid-template-columns:repeat(3,1fr);">
+<div style="display:flex;flex-direction:column;gap:8px;">
+<button class="btn btn-green small" onclick="saveToFile()">💾 Save (Download & Save)</button>
+<button class="btn btn-blue small" onclick="saveToLocal()">💾 Save to Browser</button>
+<button class="btn small" onclick="exportToPDF()">📄 Export PDF</button>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;">
+<label class="btn btn-blue small" style="cursor:pointer;">
+📤 Load JSON<input type="file" accept=".json" onchange="loadFromJSON(event)" style="display:none;">
 </label>
-<button class="btn btn-purple" onclick="exportToPDF()">
-📄 Export PDF
-</button>
-<button class="btn btn-red" onclick="clearAll()">
-🗑️ Clear All
-</button>
+<button class="btn btn-red small" onclick="clearAll()">🗑️ Clear All</button>
+<button class="btn small" onclick="newSurveyConfirm()">🆕 New Survey</button>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px;">
+<div class="file-manager">
+<select id="savedFilesSelect" class="file-list-select" onchange="onSavedFileChange()"></select>
+<button class="btn small" onclick="loadSelectedFile()">Load</button>
+</div>
+<div style="display:flex;gap:8px;">
+<button class="btn small" onclick="overwriteSelectedFile()">Overwrite</button>
+<button class="btn small" onclick="renameSelectedFile()">Rename</button>
+<button class="btn small" onclick="deleteSelectedFile()">Delete</button>
+</div>
+<div id="fileStatus" class="warning" style="display:none;margin-top:6px;"></div>
+</div>
 </div>
 </div>
 
@@ -515,918 +170,558 @@ text-align: center;
 <div class="markers-list" id="markersList"></div>
 </div>
 
-</div> 
+</div>
 <div class="footer-info">
-<p>Electrical Line Survey App | Version 2.0</p>
-<p>Developed for Professional Field Use | For Support: +91-70187-56182/ErAjay.HPSEB@gmail.com</p>
+<p>Electrical Line Survey App | Version 2.0 — Updated</p>
+<p>Developed for Professional Field Use | Support: +91-70187-56182/ErAjay.HPSEB@gmail.com</p>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
-// State
-let isTracking = false;
-let linePoints = []; // Stores all raw GPS points (actual path)
-let markers = []; // Stores key marked points (for line calculation)
-let totalDistance = 0;
-let currentPosition = null;
-let siteName = document.getElementById('siteNameInput').value; // Initialize from input
-let selectedMarkerType = 'pole';
-let selectedPoleType = 'HT'; // New state for selected pole type
-let accuracy = null;
-let watchId = null;
-
-// Leaflet Map State
-let leafletMapInstance = null;
-let leafletMarkers = [];
-let leafletPolylines = []; // Changed to array for segmented lines
-let mapTiles = null;
-let satelliteTiles = null;
-
-
-// --- GPS FILTERS FOR ACCURACY ---
-const MIN_MOVEMENT_DISTANCE = 2.0; // Meters
-const MAX_ACCURACY_ERROR = 10.0; // Meters (REQUIRED)
-const ACCURACY_THRESHOLD = 10.0; // Meters (For initial fix)
-const INITIAL_FIX_TIMEOUT = 30000; // 30 seconds
-let initialFixAttempt = false;
-let initialFixTimeoutId = null;
-// ---------------------------------
-
-const markerTypes = {
-pole: { label: 'Pole', icon: '⚡', color: '#3b82f6' },
-dtr: { label: 'DTR', icon: '🔌', color: '#ef4444' },
-structure: { label: 'Structure', icon: '🏗️', color: '#f59e0b' },
-other: { label: 'Other', icon: '❓', color: '#6b7280' }
-};
-
-// New Pole Type definitions for span color coding (Requirement 1 & 2)
-const poleTypes = {
-'HT': { label: 'HT (High Tension)', color: '#dc2626' }, // Red
-'LT-1P': { label: 'LT 1-phase', color: '#2563eb' }, // Blue
-'LT-2P': { label: 'LT 2-phase', color: '#059669' }, // Green
-'LT-3P': { label: 'LT 3-phase', color: '#f59e0b' } // Amber/Orange
-};
-
-const gpsStatusElement = document.getElementById('gpsStatus');
-const poleTypeContainer = document.getElementById('poleTypeContainer');
-
-
-// Calculate distance between two GPS points (Haversine formula)
-function calculateDistance(lat1, lon1, lat2, lon2) {
-const R = 6371e3;
-const φ1 = lat1 * Math.PI / 180;
-const φ2 = lat2 * Math.PI / 180;
-const Δφ = (lat2 - lat1) * Math.PI / 180;
-const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-Math.cos(φ1) * Math.cos(φ2) *
-Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-return R * c;
-}
-
-// Helper function to update total distance based on straight line between markers
-function updateTotalDistance() {
-totalDistance = 0;
-// Also update span lengths on markers
-if (markers.length >= 2) {
-for (let i = 1; i < markers.length; i++) {
-// Check if a line break exists between the two markers
-if (!markers[i-1].isLineBreak) {
-const dist = calculateDistance(
-markers[i-1].lat, markers[i-1].lng,
-markers[i].lat, markers[i].lng
-);
-markers[i].spanLength = dist;
-totalDistance += dist;
-} else {
-markers[i].spanLength = 0; // Span is 0 if line was broken
-}
-}
-// Set span length of the first marker to 0 for consistency
-markers[0].spanLength = 0;
-} else if (markers.length === 1) {
-markers[0].spanLength = 0;
-}
-}
-
-// New function to update site name and redraw map
-function updateSiteName(name) {
-siteName = name;
-drawMap();
-updateUI(); // Refreshes Leaflet Map
-}
-
-function startTracking() {
-if (!navigator.geolocation) {
-alert('Geolocation is not supported by your browser');
-return;
-}
-
-isTracking = true;
-initialFixAttempt = true;
-document.getElementById('startBtn').style.display = 'none';
-document.getElementById('stopBtn').style.display = 'flex';
-document.getElementById('addMarkerBtn').disabled = true; // Disable until a good fix
-
-gpsStatusElement.textContent = 'Searching for high-accuracy GPS fix...';
-gpsStatusElement.style.color = '#f97316';
-
-initialFixTimeoutId = setTimeout(() => {
-if (initialFixAttempt) {
-gpsStatusElement.textContent = 'Warning: Low accuracy after 30 seconds. Proceeding with current accuracy.';
-gpsStatusElement.style.color = '#dc2626';
-document.getElementById('addMarkerBtn').disabled = false;
-initialFixAttempt = false; // Stop checking for the initial fix
-}
-}, INITIAL_FIX_TIMEOUT);
-
-
-watchId = navigator.geolocation.watchPosition(
-(position) => {
-accuracy = position.coords.accuracy;
-
-// 1. Initial Fix Check (Only for the first good position)
-if (initialFixAttempt) {
-if (accuracy <= ACCURACY_THRESHOLD) {
-clearTimeout(initialFixTimeoutId);
-initialFixAttempt = false;
-document.getElementById('addMarkerBtn').disabled = false;
-gpsStatusElement.textContent = `GPS Fix Achieved: ±${accuracy.toFixed(1)}m`;
-gpsStatusElement.style.color = '#10b981';
-} else {
-// Update status while waiting
-gpsStatusElement.textContent = `Searching for high-accuracy GPS fix... (Current: ±${accuracy.toFixed(1)}m)`;
-updateUI(); // Update accuracy display even if point is skipped
-return; 
-}
-}
-
-// 2. Accuracy Filter (For all subsequent points)
-if (accuracy > MAX_ACCURACY_ERROR) {
-console.warn('Point skipped due to poor accuracy:', accuracy.toFixed(1) + 'm');
-updateUI();
-return; 
-}
-
-const newPoint = {
-lat: position.coords.latitude,
-lng: position.coords.longitude,
-timestamp: Date.now()
-};
-
-// 3. Distance Filter
-if (linePoints.length > 0) {
-const lastPoint = linePoints[linePoints.length - 1];
-const distanceMoved = calculateDistance(
-lastPoint.lat, lastPoint.lng,
-newPoint.lat, newPoint.lng
-);
-
-if (distanceMoved < MIN_MOVEMENT_DISTANCE) {
-currentPosition = newPoint;
-updateUI(); 
-return; 
-}
-}
-
-// If filters pass, record the point
-currentPosition = newPoint;
-linePoints.push(newPoint); 
-
-updateTotalDistance(); 
-
-updateUI();
-drawMap(); // Schematic Map
-drawLeafletMap(); // Interactive Map
-},
-(error) => {
-console.error('Error getting location:', error);
-gpsStatusElement.textContent = `GPS Error: ${error.message}`;
-gpsStatusElement.style.color = '#dc2626';
-alert('Error getting location. Please enable GPS.');
-stopTracking(); // Stop tracking on error
-},
-{
-enableHighAccuracy: true,
-timeout: 5000,
-maximumAge: 0
-}
-);
-}
-
-function stopTracking() {
-if (watchId) {
-navigator.geolocation.clearWatch(watchId);
-watchId = null;
-}
-clearTimeout(initialFixTimeoutId);
-initialFixAttempt = false;
-isTracking = false;
-document.getElementById('startBtn').style.display = 'flex';
-document.getElementById('stopBtn').style.display = 'none';
-document.getElementById('addMarkerBtn').disabled = true;
-gpsStatusElement.textContent = 'Tracking stopped.';
-gpsStatusElement.style.color = '#6b7280';
-}
-
-function selectMarkerType(type) {
-selectedMarkerType = type;
-document.querySelectorAll('.marker-btn').forEach(btn => {
-btn.classList.remove('active');
-});
-event.target.closest('.marker-btn').classList.add('active');
-document.getElementById('markerTypeLabel').textContent = markerTypes[type].label;
-
-// Show/Hide Pole Type selection based on marker type
-poleTypeContainer.style.display = (type === 'pole' || type === 'dtr') ? 'block' : 'none';
-}
-
-function updateSelectedPoleType(event) {
-if (event.target.name === 'poleType') {
-selectedPoleType = event.target.value;
-}
-}
-
-// New function to mark a line break (Requirement 4)
-function breakLineContinuity() {
-if (markers.length > 0) {
-// Mark the last marker as the end of a segment
-// The next marker added will check for this flag on the previous marker
-// to set its spanLength to 0 and skip drawing a line segment.
-markers[markers.length - 1].isLineBreak = true;
-updateMarkersList();
-alert('Line continuity broken. Next marker will start a new segment.');
-} else {
-alert('No markers to break line from.');
-}
-}
-
-
-function addMarker() {
-if (!currentPosition) {
-alert('Waiting for GPS position...');
-return;
-}
-
-if (initialFixAttempt) {
-alert('Please wait for an accurate GPS fix before adding the first marker.');
-return;
-}
-
-const newMarker = {
-id: Date.now(),
-type: selectedMarkerType,
-// Add new poleType property
-poleType: (selectedMarkerType === 'pole' || selectedMarkerType === 'dtr') ? selectedPoleType : null,
-lat: currentPosition.lat,
-lng: currentPosition.lng,
-timestamp: Date.now(),
-spanLength: 0, // Will be updated by updateTotalDistance
-isLineBreak: false // New property for line continuity
-};
-
-markers.push(newMarker);
-updateTotalDistance(); 
-updateUI();
-drawMap();
-drawLeafletMap();
-updateMarkersList();
-}
-
-function clearAll() {
-if (confirm('Clear all data? This cannot be undone.')) {
-stopTracking();
-linePoints = [];
-markers = [];
-totalDistance = 0;
-currentPosition = null;
-siteName = 'New Survey Site'; 
-document.getElementById('siteNameInput').value = siteName;
-updateUI();
-drawMap();
-drawLeafletMap(); // Clear Leaflet map
-updateMarkersList();
-gpsStatusElement.textContent = '';
-}
-}
-
-function updateUI() {
-document.getElementById('totalDistance').textContent = totalDistance.toFixed(1) + 'm';
-document.getElementById('pointsCount').textContent = linePoints.length;
-document.getElementById('markersCount').textContent = markers.length;
-document.getElementById('accuracy').textContent = accuracy ? `±${accuracy.toFixed(1)}m` : '--';
-drawLeafletMap();
-}
-
-function updateMarkersList() {
-const listCard = document.getElementById('markersListCard');
-const list = document.getElementById('markersList');
-
-if (markers.length === 0) {
-listCard.style.display = 'none';
-return;
-}
-
-listCard.style.display = 'block';
-list.innerHTML = '';
-
-markers.forEach((marker, idx) => {
-const type = markerTypes[marker.type];
-const poleTypeInfo = marker.poleType ? `(${poleTypes[marker.poleType].label})` : '';
-const spanText = (idx > 0 && marker.spanLength) ? `<span class="span-length">${marker.spanLength.toFixed(0)}m Span</span>` : (marker.isLineBreak ? '<span class="span-length" style="color:#dc2626;">Line Broken</span>' : '');
-
-item.innerHTML = `
-<div class="marker-info">
-<div class="marker-item-icon">${type.icon}</div>
-<div class="marker-details">
-<h4>${type.label} #${idx + 1} ${poleTypeInfo} ${spanText}</h4>
-<div class="marker-coords">${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}</div>
-</div>
-</div>
-<button class="delete-btn" onclick="deleteMarker(${marker.id})">🗑️</button>
-`;
-list.appendChild(item);
-});
-}
-
-function deleteMarker(id) {
-markers = markers.filter(m => m.id !== id);
-updateTotalDistance(); 
-updateUI();
-drawMap();
-drawLeafletMap();
-updateMarkersList();
-}
-
-// Function to calculate a new lat/lng by offsetting an existing one by meters
-function offsetLatLng(lat, lng, dx, dy) {
-const R = 6371e3; // Earth radius in meters
-
-// Change in latitude (dy)
-const newLat = lat + (dy / R) * (180 / Math.PI);
-
-// Change in longitude (dx)
-const newLng = lng + (dx / (R * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI);
-
-return { lat: newLat, lng: newLng };
-}
-
-// --- Schematic Map (Canvas) Function ---
-function drawMap() {
-const canvas = document.getElementById('mapCanvas');
-const ctx = canvas.getContext('2d');
-const width = canvas.width;
-const height = canvas.height;
-
-const GRID_SIZE = 10; 
-
-ctx.fillStyle = '#f0f9ff';
-ctx.fillRect(0, 0, width, height);
-
-// Draw the Site Name on the map
-ctx.fillStyle = '#1f2937';
-ctx.font = 'bold 18px Arial';
-ctx.textAlign = 'left';
-ctx.fillText(`Site: ${siteName}`, 10, 25);
-
-
-// Use both markers and linePoints to determine the map bounds
-const pointsForBounds = [...markers, ...linePoints];
-
-if (pointsForBounds.length === 0) {
-ctx.fillStyle = '#64748b';
-ctx.font = '16px Arial';
-ctx.textAlign = 'center';
-ctx.fillText('Start tracking or add markers to see map', width / 2, height / 2);
-return;
-}
-
-const lats = pointsForBounds.map(p => p.lat);
-const lngs = pointsForBounds.map(p => p.lng);
-const minLat = Math.min(...lats);
-const maxLat = Math.max(...lats);
-const minLng = Math.min(...lngs);
-const maxLng = Math.max(...lngs);
-
-const padding = 40;
-const latRange = maxLat - minLat || 0.001;
-const lngRange = maxLng - minLng || 0.001;
-
-const scaleX = (width - 2 * padding) / lngRange;
-const scaleY = (height - 2 * padding) / latRange;
-const scale = Math.min(scaleX, scaleY);
-
-const toX = (lng) => padding + (lng - minLng) * scale;
-const toY = (lat) => height - padding - (lat - minLat) * scale;
-
-// 0. DRAW GRID WATERMARK (10m x 10m)
-if (minLat && minLng) {
-const origin = { lat: minLat, lng: minLng };
-
-const offsetN = offsetLatLng(origin.lat, origin.lng, 0, GRID_SIZE);
-const offsetE = offsetLatLng(origin.lat, origin.lng, GRID_SIZE, 0);
-
-const latStep = offsetN.lat - origin.lat;
-const lngStep = offsetE.lng - origin.lng;
-
-ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)'; // Grid color (semi-transparent gray)
-ctx.lineWidth = 0.5;
-
-// Draw horizontal lines (Latitude)
-let currentLat = minLat - (latRange/10); 
-while (currentLat <= maxLat + (latRange/10)) {
-ctx.beginPath();
-const y = toY(currentLat);
-ctx.moveTo(0, y);
-ctx.lineTo(width, y);
-ctx.stroke();
-currentLat += latStep;
-}
-
-// Draw vertical lines (Longitude)
-let currentLng = minLng - (lngRange/10); 
-while (currentLng <= maxLng + (lngRange/10)) {
-ctx.beginPath();
-const x = toX(currentLng);
-ctx.moveTo(x, 0);
-ctx.lineTo(x, height);
-ctx.stroke();
-currentLng += lngStep;
-}
-
-// Add a legend to indicate grid size
-ctx.fillStyle = 'rgba(100, 100, 100, 0.8)';
-ctx.font = '10px Arial';
-ctx.textAlign = 'right';
-ctx.fillText(`Grid: ${GRID_SIZE}m x ${GRID_SIZE}m`, width - 10, height - 10);
-}
-
-
-// 1. OPTIONAL: Draw the original filtered GPS path (faintly, for reference)
-if (linePoints.length > 1) {
-ctx.strokeStyle = '#d1d5db'; 
-ctx.lineWidth = 1;
-ctx.beginPath();
-ctx.moveTo(toX(linePoints[0].lng), toY(linePoints[0].lat));
-for (let i = 1; i < linePoints.length; i++) {
-ctx.lineTo(toX(linePoints[i].lng), toY(linePoints[i].lat));
-}
-ctx.stroke();
-}
-
-// 2. Draw the MAIN Straight Line Segments between Markers
-if (markers.length > 1) {
-for (let i = 1; i < markers.length; i++) {
-const prevMarker = markers[i - 1];
-const currentMarker = markers[i];
-
-// Check for line break
-if (prevMarker.isLineBreak) {
-continue; // Skip drawing this segment
-}
-
-// Determine span color based on the current marker's poleType (Requirement 3)
-let spanColor = '#3b82f6'; // Default Blue
-if (currentMarker.type === 'pole' || currentMarker.type === 'dtr') {
-spanColor = poleTypes[currentMarker.poleType] ? poleTypes[currentMarker.poleType].color : '#3b82f6';
-}
-
-ctx.strokeStyle = spanColor; 
-ctx.lineWidth = 3;
-ctx.beginPath();
-ctx.moveTo(toX(prevMarker.lng), toY(prevMarker.lat));
-ctx.lineTo(toX(currentMarker.lng), toY(currentMarker.lat));
-ctx.stroke();
-}
-}
-
-// 3. Draw Markers, Labels, and Span Lengths
-markers.forEach((marker, idx) => {
-const type = markerTypes[marker.type];
-const x = toX(marker.lng);
-const y = toY(marker.lat);
-const markerNumber = idx + 1;
-
-// Determine marker color (use pole type color if applicable)
-let markerColor = type.color;
-let poleTypeLabel = '';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-markerColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : type.color;
-poleTypeLabel = marker.poleType ? ` (${marker.poleType})` : '';
-}
-
-
-// Draw circle boundary
-ctx.strokeStyle = markerColor;
-ctx.lineWidth = 2;
-ctx.beginPath();
-ctx.arc(x, y, 15, 0, Math.PI * 2);
-ctx.stroke();
-
-// Draw Marker Icon
-ctx.font = '24px Arial';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-ctx.fillText(type.icon, x, y);
-
-// Draw Marker Number
-ctx.fillStyle = '#1f2937';
-ctx.font = 'bold 12px Arial';
-ctx.textAlign = 'left';
-ctx.textBaseline = 'top';
-ctx.fillText(markerNumber, x + 18, y - 10);
-
-
-// Draw Span Length (on line segment, only for markers 2 and up and not a line break)
-if (idx > 0 && marker.spanLength > 0) {
-const prevMarker = markers[idx - 1];
-const prevX = toX(prevMarker.lng);
-const prevY = toY(prevMarker.lat);
-
-const midX = (x + prevX) / 2;
-const midY = (y + prevY) / 2;
-
-// Span color for label (matches line segment color)
-let spanColor = '#3b82f6'; 
-if (marker.type === 'pole' || marker.type === 'dtr') {
-spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
-
-// Draw a background box for the text to improve readability over the line
-ctx.fillStyle = '#ffffff';
-ctx.fillRect(midX - 25, midY - 10, 50, 20); // Adjust size as needed
-
-ctx.fillStyle = spanColor;
-ctx.font = 'bold 12px Arial';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-ctx.fillText(`${marker.spanLength.toFixed(0)}m`, midX, midY);
-}
-});
-
-// 4. Draw Current Position
-if (currentPosition) {
-const x = toX(currentPosition.lng);
-const y = toY(currentPosition.lat);
-
-ctx.fillStyle = '#10b981';
-ctx.beginPath();
-ctx.arc(x, y, 8, 0, Math.PI * 2);
-ctx.fill();
-
-ctx.strokeStyle = '#ffffff';
-ctx.lineWidth = 2;
-ctx.stroke();
-}
-}
-
-
-// --- Leaflet Map Functions ---
-
-function initLeafletMap() {
-// Determine the initial center point
-let centerLat = 31.7831; 
-let centerLng = 76.9926; 
-if (markers.length > 0) {
-centerLat = markers[0].lat;
-centerLng = markers[0].lng;
-} else if (currentPosition) {
-centerLat = currentPosition.lat;
-centerLng = currentPosition.lng;
-}
-
-if (leafletMapInstance) {
-leafletMapInstance.remove();
-}
-
-// 1. Initialize Leaflet Map
-leafletMapInstance = L.map('leafletMap').setView([centerLat, centerLng], 15);
-
-// 2. Define Tile Layers (Map Styles)
-
-// Esri World Imagery (Satellite/Hybrid) for the "Traffic Map" look
-satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-}).addTo(leafletMapInstance);
-
-// OpenStreetMap Standard Tiles (Optional, good fallback)
-mapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-});
-
-// Create a base map control for switching between map styles (optional but helpful)
-const baseMaps = {
-"Satellite View": satelliteTiles,
-"Street Map": mapTiles
-};
-L.control.layers(baseMaps).addTo(leafletMapInstance);
-
-// Initial draw
-drawLeafletMap();
-}
-
-function drawLeafletMap() {
-if (!leafletMapInstance) {
-initLeafletMap();
-return;
-}
-
-// 1. Clear previous layers (markers and polylines)
-leafletMarkers.forEach(m => m.remove());
-leafletMarkers = [];
-leafletPolylines.forEach(p => p.remove());
-leafletPolylines = [];
-
-// 2. Draw the main line (Polyline Segments)
-let segmentCoordinates = [];
-let currentSegmentColor = '#3b82f6'; // Default color
-
-for (let i = 0; i < markers.length; i++) {
-const marker = markers[i];
-
-if (i > 0) {
-const prevMarker = markers[i - 1];
-
-// Check if a segment should be drawn
-if (!prevMarker.isLineBreak) {
-// Segment is between previous marker and current marker
-segmentCoordinates.push([marker.lat, marker.lng]);
-
-// Determine span color based on the current marker's poleType (Requirement 3)
-let nextSegmentColor = '#3b82f6';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
-
-// If segment color is changing or this is the last marker, draw the segment
-if (nextSegmentColor !== currentSegmentColor || i === markers.length - 1) {
-const polyline = L.polyline(segmentCoordinates, {
-color: currentSegmentColor, // Color of the segment ending at this point
-weight: 4,
-opacity: 1.0,
-dashArray: '8, 8'
-}).addTo(leafletMapInstance);
-leafletPolylines.push(polyline);
-
-// If the color is changing, start a new segment from the previous marker
-if (nextSegmentColor !== currentSegmentColor) {
-segmentCoordinates = [[prevMarker.lat, prevMarker.lng], [marker.lat, marker.lng]];
-currentSegmentColor = nextSegmentColor;
-}
-}
-} else {
-// Line break: start a new segment from the current marker
-segmentCoordinates = [[marker.lat, marker.lng]];
-// Reset currentSegmentColor based on the current marker's type
-if (marker.type === 'pole' || marker.type === 'dtr') {
-currentSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-} else {
-currentSegmentColor = '#3b82f6';
-}
-}
-} else {
-// First marker, initialize the segment path
-segmentCoordinates.push([marker.lat, marker.lng]);
-// Initialize currentSegmentColor based on the first marker's type
-if (marker.type === 'pole' || marker.type === 'dtr') {
-currentSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
-}
-
-// Final check to draw the last segment if needed
-if (i === markers.length - 1 && segmentCoordinates.length > 1) {
-const polyline = L.polyline(segmentCoordinates, {
-color: currentSegmentColor,
-weight: 4,
-opacity: 1.0,
-dashArray: '8, 8'
-}).addTo(leafletMapInstance);
-leafletPolylines.push(polyline);
-}
-}
-// End of line drawing loop
-
-// 3. Draw the Markers and labels
-markers.forEach((marker, idx) => {
-const type = markerTypes[marker.type];
-const markerNumber = idx + 1;
-
-// Determine marker color (use pole type color if applicable)
-let markerColor = type.color;
-let poleTypeLabel = '';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-markerColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : type.color;
-poleTypeLabel = poleTypes[marker.poleType] ? ` - ${poleTypes[marker.poleType].label}` : '';
-}
-
-const spanText = (idx > 0 && marker.spanLength) ? `${marker.spanLength.toFixed(0)}m Span` : (marker.isLineBreak ? 'Line Broken' : '');
-
-
-// Custom icon for a clean, numbered look
-const markerIcon = L.divIcon({
-className: 'custom-marker',
-html: `<div style="background-color: ${markerColor}; border: 3px solid white; color: white; border-radius: 50%; width: 30px; height: 30px; line-height: 25px; text-align: center; font-weight: bold; font-size: 14px;">${markerNumber}</div>`,
-iconSize: [30, 30],
-iconAnchor: [15, 15]
-});
-
-const lMarker = L.marker([marker.lat, marker.lng], {
-icon: markerIcon,
-title: `${type.label} #${markerNumber}`
-}).addTo(leafletMapInstance);
-
-// Add a popup with details
-lMarker.bindPopup(`
-<div style="font-family: Arial; padding: 5px;">
-<strong>${type.label} #${markerNumber}${poleTypeLabel}</strong><br>
-Lat: ${marker.lat.toFixed(6)}, Lng: ${marker.lng.toFixed(6)}<br>
-${spanText}
-</div>
-`);
-
-leafletMarkers.push(lMarker);
-});
-
-// 4. Center and zoom the map to fit all markers
-if (markers.length > 0) {
-const allLatLngs = markers.map(m => [m.lat, m.lng]);
-if (allLatLngs.length > 1) {
-leafletMapInstance.fitBounds(allLatLngs, { padding: [30, 30] });
-} else if (allLatLngs.length === 1) {
-leafletMapInstance.setView(allLatLngs[0], 17);
-}
-}
-}
-
-// --- End Leaflet Map Functions ---
-
-
-function saveToJSON() {
-const data = {
-version: '2.0', // Updated version number
-created: new Date().toISOString(),
-siteName: siteName, 
-totalDistance: totalDistance, 
-linePoints: linePoints,
-markers: markers.map((m, idx) => ({
-...m,
-index: idx + 1, // Add sequential index for better reporting
-typeLabel: markerTypes[m.type].label,
-poleTypeLabel: m.poleType ? poleTypes[m.poleType].label : 'N/A', // New pole type label
-spanLength: m.spanLength ? m.spanLength.toFixed(2) : 'N/A', // Include span length
-isLineBreak: m.isLineBreak || false // Include line break status
-}))
-};
-
-const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v2-${Date.now()}.json`;
-a.click();
-URL.revokeObjectURL(url);
-}
-
-function loadFromJSON(event) {
-const file = event.target.files[0];
-if (!file) return;
-
-const reader = new FileReader();
-reader.onload = (e) => {
-try {
-const data = JSON.parse(e.target.result);
-linePoints = data.linePoints || [];
-
-// Reconstruct markers, handling new V2.0 properties and backward compatibility
-markers = (data.markers || []).map(m => ({
-...m,
-spanLength: m.spanLength ? parseFloat(m.spanLength) : 0,
-type: m.type || 'pole',
-poleType: m.poleType || 'HT', // Default to HT if not present (V1.0 backward compatibility)
-isLineBreak: m.isLineBreak || false, // Default to false if not present (V1.0 backward compatibility)
-lat: m.lat,
-lng: m.lng
-})); 
-siteName = data.siteName || 'New Survey Site'; 
-document.getElementById('siteNameInput').value = siteName; 
-
-updateTotalDistance(); // Recalculate distance and spans based on loaded data
-updateUI();
-drawMap();
-drawLeafletMap(); // Initialize/refresh Leaflet map
-updateMarkersList();
-alert(`Survey data loaded successfully! (Version: ${data.version || '1.0'})`);
-} catch (error) {
-console.error("Load JSON Error:", error);
-alert('Error loading file. Please check the file format.');
-}
-};
-reader.readAsText(file);
-event.target.value = '';
-}
-
-function exportToPDF() {
-const canvas = document.getElementById('mapCanvas');
-const pdfCanvas = document.createElement('canvas');
-const pdfCtx = pdfCanvas.getContext('2d');
-pdfCanvas.width = 800;
-pdfCanvas.height = 1000;
-
-pdfCtx.fillStyle = '#ffffff';
-pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-
-pdfCtx.fillStyle = '#000000';
-pdfCtx.font = 'bold 24px Arial';
-pdfCtx.fillText('Electrical Line Survey Report (V2.0)', 50, 40);
-
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(`Site Name: ${siteName}`, 50, 70); 
-pdfCtx.fillText(`Date: ${new Date().toLocaleDateString()}`, 50, 90);
-pdfCtx.fillText(`Total Distance: ${totalDistance.toFixed(2)} meters (Straight Line)`, 50, 110);
-pdfCtx.fillText(`Total Points: ${linePoints.length}`, 50, 130);
-pdfCtx.fillText(`Markers: ${markers.length}`, 50, 150);
-
-// Map drawing
-pdfCtx.drawImage(canvas, 50, 170, 700, 500); 
-
-// Symbol Description
-pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Symbol Description', 550, 680);
-
-let legendY = 710;
-Object.values(markerTypes).forEach(type => {
-pdfCtx.font = '24px Arial';
-pdfCtx.fillText(type.icon, 560, legendY);
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(type.label, 600, legendY - 5);
-legendY += 30;
-});
-
-// Span Color Legend
-pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Span Color Legend (Line Type to End Marker):', 50, 710);
-let spanLegendY = 740;
-Object.values(poleTypes).forEach(ptype => {
-pdfCtx.fillStyle = ptype.color;
-pdfCtx.fillRect(50, spanLegendY - 10, 20, 10);
-pdfCtx.fillStyle = '#000000';
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(ptype.label, 80, spanLegendY);
-spanLegendY += 20;
-});
-
-
-// GPS Coordinates Table Header
-pdfCtx.font = 'bold 14px Arial';
-pdfCtx.fillText('GPS Coordinates & Span:', 50, spanLegendY + 20);
-
-// GPS Coordinates Table
-let coordY = spanLegendY + 50;
-pdfCtx.font = '12px Arial';
-markers.forEach((marker, idx) => {
-if (coordY > 950) return;
-const type = markerTypes[marker.type];
-const pole = marker.poleType ? ` (${marker.poleType})` : '';
-const span = marker.spanLength ? ` (Span: ${marker.spanLength.toFixed(0)}m)` : (marker.isLineBreak ? ' (LINE BREAK)' : '');
-pdfCtx.fillText(
-`${idx + 1}. ${type.label}${pole}: ${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}${span}`,
-50,
-coordY
-);
-coordY += 20;
-});
-
-// Developer Info Footer (Drawing/PDF)
-pdfCtx.fillStyle = '#6b7280';
-pdfCtx.font = '10px Arial';
-pdfCtx.textAlign = 'center';
-pdfCtx.fillText(
-'Developed for Professional Field Use | Survey App Version 2.0 | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com]',
-pdfCanvas.width / 2,
-980 
-);
-
-pdfCanvas.toBlob((blob) => {
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v2-${Date.now()}.png`;
-a.click();
-URL.revokeObjectURL(url);
-alert('Report exported successfully as PNG image!');
-});
-}
-
-// Initialize
+/* =========================
+   Core state (mostly from original file)
+   ========================= */
+let isTracking=false;
+let linePoints=[];
+let markers=[];
+let totalDistance=0;
+let currentPosition=null;
+let siteName=document.getElementById('siteNameInput').value;
+let selectedMarkerType='pole';
+let selectedPoleType='HT';
+let accuracy=null;
+let watchId=null;
+let initialFixAttempt=false;
+let initialFixTimeoutId=null;
+const MIN_MOVEMENT_DISTANCE=2.0;
+const MAX_ACCURACY_ERROR=10.0;
+const ACCURACY_THRESHOLD=10.0;
+const INITIAL_FIX_TIMEOUT=30000;
+const markerTypes={pole:{label:'Pole',icon:'⚡',color:'#3b82f6'},dtr:{label:'DTR',icon:'🔌',color:'#ef4444'},structure:{label:'Structure',icon:'🏗️',color:'#f59e0b'},other:{label:'Other',icon:'❓',color:'#6b7280'}};
+const poleTypes={'HT':{label:'HT (High Tension)',color:'#dc2626'},'LT-1P':{label:'LT 1-phase',color:'#2563eb'},'LT-2P':{label:'LT 2-phase',color:'#059669'},'LT-3P':{label:'LT 3-phase',color:'#f59e0b'}};
+const gpsStatusElement=document.getElementById('gpsStatus');
+const poleTypeContainer=document.getElementById('poleTypeContainer');
+const savedFilesKey = "survey_saved_files"; // maps filename -> metadata (stores list)
+const autosaveKey = "survey_autosave_v2";
+let dirty=false; // tracks unsaved changes
+
+/* =========================
+   Utilities: sanitize name, mark dirty, autosave
+   ========================= */
+function sanitizeFileName(name){
+  return name.replace(/[^a-z0-9\-_\.]/gi,'_').trim();
+}
+function markDirty(){ dirty=true; updateFileStatus(); }
+function markSaved(){ dirty=false; updateFileStatus(); }
+function updateFileStatus(){
+  const el = document.getElementById('fileStatus');
+  if(dirty){ el.style.display='block'; el.textContent='Unsaved changes → Save to Browser or Download'; }
+  else { el.style.display='none'; el.textContent=''; }
+}
+
+/* =========================
+   Autosave to localStorage (every 2 seconds)
+   ========================= */
+function autosaveToBrowser(){
+  const data = {
+    version:'2.0',
+    savedAt: new Date().toISOString(),
+    siteName: siteName,
+    totalDistance: totalDistance,
+    linePoints: linePoints,
+    markers: markers
+  };
+  try{
+    localStorage.setItem(autosaveKey, JSON.stringify(data));
+    // also keep a flag that autosave exists
+    localStorage.setItem(autosaveKey + "_ts", Date.now().toString());
+    // do not clear dirty flag—autosave is not explicit save
+  }catch(e){
+    console.warn("Autosave failed", e);
+  }
+}
+setInterval(autosaveToBrowser, 2000);
+
+/* =========================
+   Saved files management in localStorage
+   savedFilesKey stores an object mapping filename-> {name, created, modified}
+   each file content stored under key "survey_file:"+filename
+   ========================= */
+function getSavedFilesList(){
+  try{
+    const raw = localStorage.getItem(savedFilesKey);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function persistSavedFilesList(list){
+  localStorage.setItem(savedFilesKey, JSON.stringify(list));
+}
+function saveFileContentToBrowser(filename, dataObj){
+  const key = "survey_file:" + filename;
+  localStorage.setItem(key, JSON.stringify(dataObj));
+  const list = getSavedFilesList();
+  list[filename] = { name: filename, modified: new Date().toISOString() , size: JSON.stringify(dataObj).length};
+  persistSavedFilesList(list);
+  loadSavedFilesSelect();
+  markSaved();
+}
+function deleteFileFromBrowser(filename){
+  const key = "survey_file:" + filename;
+  localStorage.removeItem(key);
+  const list = getSavedFilesList();
+  delete list[filename];
+  persistSavedFilesList(list);
+  loadSavedFilesSelect();
+}
+function loadFileContentFromBrowser(filename){
+  const key = "survey_file:" + filename;
+  const raw = localStorage.getItem(key);
+  return raw ? JSON.parse(raw) : null;
+}
+function loadSavedFilesSelect(){
+  const sel = document.getElementById('savedFilesSelect');
+  sel.innerHTML = '';
+  const list = getSavedFilesList();
+  const names = Object.keys(list).sort();
+  if(names.length===0){
+    const opt = document.createElement('option'); opt.value=''; opt.textContent='-- No saved files --'; sel.appendChild(opt);
+    return;
+  }
+  const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='-- Select saved file --'; sel.appendChild(opt0);
+  names.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n + " (" + new Date(list[n].modified).toLocaleString() + ")";
+    sel.appendChild(opt);
+  });
+}
+loadSavedFilesSelect();
+
+/* =========================
+   Track user changes to set dirty flag
+   ========================= */
+function onUserChange(){ siteName = document.getElementById('siteNameInput').value; markDirty(); drawMap(); updateUI(); }
+
+/* =========================
+   Save: download + save to browser
+   saveToLocal() only saves to browser
+   saveToFile() downloads and also saves to browser
+   ========================= */
+function buildSurveyData(){
+  return {
+    version:'2.0',
+    created: new Date().toISOString(),
+    siteName: siteName,
+    totalDistance: totalDistance,
+    linePoints: linePoints,
+    markers: markers.map((m,idx)=>({...m, index: idx+1, typeLabel: markerTypes[m.type].label, poleTypeLabel: m.poleType ? poleTypes[m.poleType].label : 'N/A'}))
+  };
+}
+function saveToLocal(){
+  const filename = sanitizeFileName(siteName || 'untitled');
+  const data = buildSurveyData();
+  saveFileContentToBrowser(filename, data);
+  alert('Saved to browser storage as: ' + filename);
+}
+function saveToFile(){
+  const filename = sanitizeFileName(siteName || 'untitled');
+  const data = buildSurveyData();
+  // Save to browser as well
+  saveFileContentToBrowser(filename, data);
+  // Trigger download
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  alert('Downloaded and saved as: ' + filename + '.json');
+}
+
+/* =========================
+   UI helpers for saved files actions
+   ========================= */
+function onSavedFileChange(){}
+function loadSelectedFile(){
+  const sel = document.getElementById('savedFilesSelect');
+  const filename = sel.value;
+  if(!filename){ alert('Please select a saved file'); return; }
+  const data = loadFileContentFromBrowser(filename);
+  if(!data){ alert('File not found in browser storage'); loadSavedFilesSelect(); return; }
+  if(dirty){
+    if(!confirm('You have unsaved changes. Loading will discard them. Continue?')) return;
+  }
+  applyLoadedDataToState(data);
+  markSaved();
+  alert('Loaded: ' + filename);
+}
+function overwriteSelectedFile(){
+  const sel = document.getElementById('savedFilesSelect');
+  const filename = sel.value;
+  if(!filename){ alert('Please select a saved file to overwrite'); return; }
+  const data = buildSurveyData();
+  if(!confirm('Overwrite "'+filename+'"? This will replace stored file contents.')) return;
+  saveFileContentToBrowser(filename, data);
+  alert('Overwritten: ' + filename);
+}
+function renameSelectedFile(){
+  const sel = document.getElementById('savedFilesSelect');
+  const oldName = sel.value;
+  if(!oldName){ alert('Please select a saved file to rename'); return; }
+  const newNameRaw = prompt('Enter new name for file:', oldName);
+  if(!newNameRaw) return;
+  const newName = sanitizeFileName(newNameRaw);
+  if(newName===oldName){ alert('Name unchanged'); return; }
+  const list = getSavedFilesList();
+  if(list[newName]){ if(!confirm('A file with that name exists. Overwrite?')) return; }
+  const content = loadFileContentFromBrowser(oldName);
+  if(!content){ alert('Original file missing'); return; }
+  saveFileContentToBrowser(newName, content);
+  deleteFileFromBrowser(oldName);
+  alert('Renamed to: ' + newName);
+}
+function deleteSelectedFile(){
+  const sel = document.getElementById('savedFilesSelect');
+  const filename = sel.value;
+  if(!filename){ alert('Please select a saved file to delete'); return; }
+  if(!confirm('Delete "'+filename+'"? This cannot be undone.')) return;
+  deleteFileFromBrowser(filename);
+  alert('Deleted: ' + filename);
+}
+
+/* =========================
+   Apply loaded data to app state
+   ========================= */
+function applyLoadedDataToState(data){
+  linePoints = data.linePoints || [];
+  markers = (data.markers || []).map(m=>({...m, spanLength: m.spanLength ? parseFloat(m.spanLength) : (m.spanLength===0?0:0), isLineBreak: m.isLineBreak||false}));
+  siteName = data.siteName || document.getElementById('siteNameInput').value || 'New Survey Site';
+  document.getElementById('siteNameInput').value = siteName;
+  updateTotalDistance();
+  updateUI();
+  drawMap();
+  drawLeafletMap();
+  updateMarkersList();
+}
+
+/* =========================
+   New survey with check for unsaved changes
+   ========================= */
+function newSurveyConfirm(){
+  if(dirty){
+    if(!confirm('You have unsaved data. Creating a new survey will discard unsaved changes. Continue?')) return;
+  }
+  stopTracking();
+  linePoints = []; markers = []; totalDistance=0; currentPosition=null;
+  siteName = 'New Survey Site';
+  document.getElementById('siteNameInput').value = siteName;
+  markDirty();
+  updateUI(); drawMap(); drawLeafletMap(); updateMarkersList();
+}
+
+/* =========================
+   Existing original functions (simplified/kept)
+   - calculateDistance, updateTotalDistance, start/stop tracking,
+   - addMarker, breakLineContinuity, deleteMarker, drawMap, leaflet init/draw,
+   - loadFromJSON, exportToPDF, clearAll, updateUI, updateMarkersList
+   (Most logic copied/adjusted from original file to keep behavior)
+   ========================= */
+
+/* --- distance --- */
+function calculateDistance(lat1,lon1,lat2,lon2){
+  const R=6371e3;
+  const φ1=lat1*Math.PI/180;
+  const φ2=lat2*Math.PI/180;
+  const Δφ=(lat2-lat1)*Math.PI/180;
+  const Δλ=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(Δφ/2)*Math.sin(Δφ/2)+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)*Math.sin(Δλ/2);
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return R*c;
+}
+function updateTotalDistance(){
+  totalDistance=0;
+  if(markers.length>=2){
+    for(let i=1;i<markers.length;i++){
+      if(!markers[i-1].isLineBreak){
+        const dist = calculateDistance(markers[i-1].lat,markers[i-1].lng,markers[i].lat,markers[i].lng);
+        markers[i].spanLength=dist;
+        totalDistance+=dist;
+      } else {
+        markers[i].spanLength=0;
+      }
+    }
+    markers[0].spanLength=0;
+  } else if(markers.length===1){ markers[0].spanLength=0; }
+}
+
+/* --- GPS tracking --- */
+function startTracking(){
+  if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+  isTracking=true; initialFixAttempt=true;
+  document.getElementById('startBtn').style.display='none';
+  document.getElementById('stopBtn').style.display='flex';
+  document.getElementById('addMarkerBtn').disabled=true;
+  gpsStatusElement.textContent='Searching for high-accuracy GPS fix...'; gpsStatusElement.style.color='#f97316';
+  initialFixTimeoutId = setTimeout(()=>{
+    if(initialFixAttempt){
+      gpsStatusElement.textContent='Warning: Low accuracy after 30 seconds. Proceeding with current accuracy.'; gpsStatusElement.style.color='#dc2626';
+      document.getElementById('addMarkerBtn').disabled=false; initialFixAttempt=false;
+    }
+  }, INITIAL_FIX_TIMEOUT);
+
+  watchId = navigator.geolocation.watchPosition((position)=>{
+    accuracy = position.coords.accuracy;
+    if(initialFixAttempt){
+      if(accuracy<=ACCURACY_THRESHOLD){ clearTimeout(initialFixTimeoutId); initialFixAttempt=false; document.getElementById('addMarkerBtn').disabled=false; gpsStatusElement.textContent=`GPS Fix Achieved: ±${accuracy.toFixed(1)}m`; gpsStatusElement.style.color='#10b981'; }
+      else { gpsStatusElement.textContent=`Searching for high-accuracy GPS fix... (Current: ±${accuracy.toFixed(1)}m)`; updateUI(); return; }
+    }
+    if(accuracy>MAX_ACCURACY_ERROR){ console.warn('Point skipped due to poor accuracy', accuracy); updateUI(); return; }
+    const newPoint={ lat: position.coords.latitude, lng: position.coords.longitude, timestamp: Date.now()};
+    if(linePoints.length>0){
+      const last = linePoints[linePoints.length-1];
+      const moved = calculateDistance(last.lat,last.lng,newPoint.lat,newPoint.lng);
+      if(moved < MIN_MOVEMENT_DISTANCE){ currentPosition=newPoint; updateUI(); return; }
+    }
+    currentPosition=newPoint;
+    linePoints.push(newPoint);
+    updateTotalDistance(); markDirty();
+    updateUI(); drawMap(); drawLeafletMap();
+  }, (err)=>{ console.error(err); gpsStatusElement.textContent = `GPS Error: ${err.message}`; gpsStatusElement.style.color='#dc2626'; alert('Error getting location. Please enable GPS.'); stopTracking(); }, {enableHighAccuracy:true, timeout:5000, maximumAge:0});
+}
+function stopTracking(){ if(watchId){ navigator.geolocation.clearWatch(watchId); watchId=null;} clearTimeout(initialFixTimeoutId); initialFixAttempt=false; isTracking=false; document.getElementById('startBtn').style.display='flex'; document.getElementById('stopBtn').style.display='none'; document.getElementById('addMarkerBtn').disabled=true; gpsStatusElement.textContent='Tracking stopped.'; gpsStatusElement.style.color='#6b7280'; }
+
+/* --- marker type selector --- */
+function selectMarkerType(type, ev){
+  selectedMarkerType=type;
+  document.querySelectorAll('.marker-btn').forEach(btn=>btn.classList.remove('active'));
+  if(ev && ev.target) ev.target.closest('.marker-btn').classList.add('active');
+  document.getElementById('markerTypeLabel').textContent = markerTypes[type].label;
+  poleTypeContainer.style.display = (type==='pole' || type==='dtr') ? 'block' : 'none';
+  markDirty();
+}
+
+/* --- update selected pole type --- */
+function updateSelectedPoleType(ev){ if(ev.target && ev.target.name==='poleType'){ selectedPoleType = ev.target.value; markDirty(); } }
+
+/* --- break line --- */
+function breakLineContinuity(){ if(markers.length>0){ markers[markers.length-1].isLineBreak=true; updateMarkersList(); alert('Line continuity broken. Next marker will start a new segment.'); markDirty(); } else alert('No markers to break from.'); }
+
+/* --- add marker --- */
+function addMarker(){
+  if(!currentPosition){ alert('Waiting for GPS position...'); return; }
+  if(initialFixAttempt){ alert('Please wait for accurate GPS fix before adding the first marker.'); return; }
+  const newMarker = { id: Date.now(), type: selectedMarkerType, poleType: (selectedMarkerType==='pole'||selectedMarkerType==='dtr') ? selectedPoleType : null, lat: currentPosition.lat, lng: currentPosition.lng, timestamp: Date.now(), spanLength:0, isLineBreak:false };
+  markers.push(newMarker); updateTotalDistance(); markDirty(); updateUI(); drawMap(); drawLeafletMap(); updateMarkersList();
+}
+
+/* --- delete marker by id --- */
+function deleteMarker(id){ markers = markers.filter(m=>m.id!==id); updateTotalDistance(); markDirty(); updateUI(); drawMap(); drawLeafletMap(); updateMarkersList(); }
+
+/* --- clear all --- */
+function clearAll(){ if(confirm('Clear all data? This cannot be undone.')){ stopTracking(); linePoints=[]; markers=[]; totalDistance=0; currentPosition=null; siteName='New Survey Site'; document.getElementById('siteNameInput').value = siteName; markDirty(); updateUI(); drawMap(); drawLeafletMap(); updateMarkersList(); gpsStatusElement.textContent=''; } }
+
+/* --- simple offset function used by canvas grid --- */
+function offsetLatLng(lat,lng,dx,dy){
+  const R=6371e3;
+  const newLat = lat + (dy / R) * (180 / Math.PI);
+  const newLng = lng + (dx / (R * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI);
+  return {lat:newLat, lng:newLng};
+}
+
+/* --- drawMap (canvas) simplified but functional --- */
+function drawMap(){
+  const canvas = document.getElementById('mapCanvas');
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width, height = canvas.height;
+  ctx.fillStyle='#f0f9ff'; ctx.fillRect(0,0,width,height);
+  ctx.fillStyle='#1f2937'; ctx.font='bold 18px Arial'; ctx.textAlign='left'; ctx.fillText(`Site: ${siteName}`,10,25);
+  const pointsForBounds = [...markers, ...linePoints];
+  if(pointsForBounds.length===0){ ctx.fillStyle='#64748b'; ctx.font='16px Arial'; ctx.textAlign='center'; ctx.fillText('Start tracking or add markers to see map', width/2, height/2); return; }
+  const lats = pointsForBounds.map(p=>p.lat); const lngs = pointsForBounds.map(p=>p.lng);
+  const minLat = Math.min(...lats); const maxLat = Math.max(...lats); const minLng = Math.min(...lngs); const maxLng = Math.max(...lngs);
+  const padding = 40; const latRange = maxLat - minLat || 0.001; const lngRange = maxLng - minLng || 0.001;
+  const scaleX = (width - 2*padding)/lngRange; const scaleY = (height - 2*padding)/latRange; const scale = Math.min(scaleX,scaleY);
+  const toX = (lng)=> padding + (lng - minLng) * scale; const toY=(lat)=> height - padding - (lat - minLat) * scale;
+  // draw faint gps path
+  if(linePoints.length>1){ ctx.strokeStyle='#d1d5db'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(toX(linePoints[0].lng), toY(linePoints[0].lat)); for(let i=1;i<linePoints.length;i++){ ctx.lineTo(toX(linePoints[i].lng), toY(linePoints[i].lat)); } ctx.stroke(); }
+  // draw segments between markers
+  if(markers.length>1){
+    for(let i=1;i<markers.length;i++){
+      const prev = markers[i-1]; const cur = markers[i];
+      if(prev.isLineBreak) continue;
+      let spanColor = '#3b82f6';
+      if(cur.type==='pole' || cur.type==='dtr'){ spanColor = poleTypes[cur.poleType] ? poleTypes[cur.poleType].color : '#3b82f6'; }
+      ctx.strokeStyle = spanColor; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(toX(prev.lng), toY(prev.lat)); ctx.lineTo(toX(cur.lng), toY(cur.lat)); ctx.stroke();
+    }
+  }
+  markers.forEach((marker,idx)=>{
+    const type = markerTypes[marker.type];
+    const x = toX(marker.lng); const y = toY(marker.lat);
+    let markerColor = type.color; if(marker.type==='pole'||marker.type==='dtr'){ markerColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : type.color; }
+    ctx.strokeStyle = markerColor; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x,y,15,0,Math.PI*2); ctx.stroke();
+    ctx.font = '24px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(type.icon, x, y);
+    ctx.fillStyle = '#1f2937'; ctx.font = 'bold 12px Arial'; ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText(idx+1, x+18, y-10);
+    if(idx>0 && marker.spanLength>0){
+      const prev = markers[idx-1]; const prevX = toX(prev.lng); const prevY = toY(prev.lat); const midX = (x+prevX)/2; const midY=(y+prevY)/2;
+      ctx.fillStyle='#ffffff'; ctx.fillRect(midX-25, midY-10, 50, 20);
+      let spanColor = '#3b82f6'; if(marker.type==='pole'||marker.type==='dtr'){ spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6'; }
+      ctx.fillStyle = spanColor; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(`${marker.spanLength.toFixed(0)}m`, midX, midY);
+    }
+  });
+  if(currentPosition){
+    const x = toX(currentPosition.lng); const y = toY(currentPosition.lat);
+    ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.arc(x,y,8,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+/* --- Leaflet map (initialize & draw) --- */
+let leafletMapInstance=null; let leafletMarkers=[]; let leafletPolylines=[]; let mapTiles=null; let satelliteTiles=null;
+function initLeafletMap(){
+  let centerLat=31.7831, centerLng=76.9926;
+  if(markers.length>0){ centerLat = markers[0].lat; centerLng = markers[0].lng; }
+  else if(currentPosition){ centerLat = currentPosition.lat; centerLng = currentPosition.lng; }
+  if(leafletMapInstance){ leafletMapInstance.remove(); }
+  leafletMapInstance = L.map('leafletMap').setView([centerLat, centerLng], 15);
+  satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{ attribution:'Tiles &copy; Esri' }).addTo(leafletMapInstance);
+  mapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap contributors' });
+  const baseMaps = {"Satellite View": satelliteTiles, "Street Map": mapTiles};
+  L.control.layers(baseMaps).addTo(leafletMapInstance);
+  drawLeafletMap();
+}
+function drawLeafletMap(){
+  if(!leafletMapInstance){ initLeafletMap(); return; }
+  leafletMarkers.forEach(m=>m.remove()); leafletMarkers=[]; leafletPolylines.forEach(p=>p.remove()); leafletPolylines=[];
+  let segmentCoordinates=[]; let currentSegmentColor='#3b82f6';
+  for(let i=0;i<markers.length;i++){
+    const marker = markers[i];
+    if(i>0){
+      const prev = markers[i-1];
+      if(!prev.isLineBreak){
+        segmentCoordinates.push([marker.lat, marker.lng]);
+        let nextSegmentColor='#3b82f6';
+        if(marker.type==='pole' || marker.type==='dtr'){ nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6'; }
+        if(nextSegmentColor !== currentSegmentColor || i === markers.length-1){
+          const polyline = L.polyline(segmentCoordinates,{ color: currentSegmentColor, weight:4, opacity:1.0, dashArray:'8,8' }).addTo(leafletMapInstance);
+          leafletPolylines.push(polyline);
+          if(nextSegmentColor !== currentSegmentColor){ segmentCoordinates = [[prev.lat, prev.lng], [marker.lat, marker.lng]]; currentSegmentColor = nextSegmentColor; }
+        }
+      } else {
+        segmentCoordinates = [[marker.lat, marker.lng]];
+        if(marker.type==='pole'||marker.type==='dtr'){ currentSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6'; } else { currentSegmentColor = '#3b82f6'; }
+      }
+    } else {
+      segmentCoordinates.push([marker.lat, marker.lng]);
+      if(marker.type==='pole'||marker.type==='dtr'){ currentSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6'; }
+    }
+    if(i===markers.length-1 && segmentCoordinates.length>1){
+      const polyline = L.polyline(segmentCoordinates,{ color: currentSegmentColor, weight:4, opacity:1.0, dashArray:'8,8' }).addTo(leafletMapInstance);
+      leafletPolylines.push(polyline);
+    }
+  }
+  markers.forEach((marker, idx)=>{
+    const type = markerTypes[marker.type];
+    const markerNumber = idx+1;
+    let markerColor = type.color; let poleTypeLabel='';
+    if(marker.type==='pole'||marker.type==='dtr'){ markerColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : type.color; poleTypeLabel = poleTypes[marker.poleType] ? ` - ${poleTypes[marker.poleType].label}` : ''; }
+    const spanText = (idx>0 && marker.spanLength) ? `${marker.spanLength.toFixed(0)}m Span` : (marker.isLineBreak ? 'Line Broken' : '');
+    const markerIcon = L.divIcon({ className:'custom-marker', html:`<div style="background-color: ${markerColor}; border:3px solid white; color:white; border-radius:50%; width:30px; height:30px; line-height:25px; text-align:center; font-weight:bold; font-size:14px;">${markerNumber}</div>`, iconSize:[30,30], iconAnchor:[15,15] });
+    const lMarker = L.marker([marker.lat, marker.lng], { icon: markerIcon, title:`${type.label} #${markerNumber}` }).addTo(leafletMapInstance);
+    lMarker.bindPopup(`<div style="font-family: Arial; padding:5px;"><strong>${type.label} #${markerNumber}${poleTypeLabel}</strong><br>Lat: ${marker.lat.toFixed(6)}, Lng: ${marker.lng.toFixed(6)}<br>${spanText}</div>`);
+    leafletMarkers.push(lMarker);
+  });
+  if(markers.length>0){
+    const allLatLngs = markers.map(m=>[m.lat, m.lng]);
+    if(allLatLngs.length>1) leafletMapInstance.fitBounds(allLatLngs, { padding:[30,30] });
+    else leafletMapInstance.setView(allLatLngs[0], 17);
+  }
+}
+
+/* --- load from JSON file (local file input) --- */
+function loadFromJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(dirty){
+        if(!confirm('You have unsaved changes. Loading will discard them. Continue?')){ event.target.value=''; return; }
+      }
+      applyLoadedDataToState(data);
+      markSaved();
+      alert('Survey data loaded successfully!');
+    }catch(err){ console.error('Load JSON Error', err); alert('Error loading file. Check format.'); }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+/* --- export to PDF (keeps original PNG export behavior) --- */
+function exportToPDF(){
+  const canvas = document.getElementById('mapCanvas');
+  const pdfCanvas = document.createElement('canvas');
+  const pdfCtx = pdfCanvas.getContext('2d');
+  pdfCanvas.width = 800; pdfCanvas.height = 1000;
+  pdfCtx.fillStyle='#ffffff'; pdfCtx.fillRect(0,0,pdfCanvas.width,pdfCanvas.height);
+  pdfCtx.fillStyle='#000000'; pdfCtx.font='bold 24px Arial'; pdfCtx.fillText('Electrical Line Survey Report (V2.0)',50,40);
+  pdfCtx.font='14px Arial'; pdfCtx.fillText(`Site Name: ${siteName}`,50,70); pdfCtx.fillText(`Date: ${new Date().toLocaleDateString()}`,50,90);
+  pdfCtx.fillText(`Total Distance: ${totalDistance.toFixed(2)} meters (Straight Line)`,50,110);
+  pdfCtx.fillText(`Total Points: ${linePoints.length}`,50,130); pdfCtx.fillText(`Markers: ${markers.length}`,50,150);
+  pdfCtx.drawImage(canvas,50,170,700,500);
+  // Legend and table...
+  pdfCanvas.toBlob((blob)=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = sanitizeFileName(siteName || 'survey') + '-report.png';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('Report exported successfully as PNG image!');
+  });
+}
+
+/* --- update UI & markers list --- */
+function updateUI(){
+  document.getElementById('totalDistance').textContent = totalDistance.toFixed(1) + 'm';
+  document.getElementById('pointsCount').textContent = linePoints.length;
+  document.getElementById('markersCount').textContent = markers.length;
+  document.getElementById('accuracy').textContent = accuracy ? `±${accuracy.toFixed(1)}m` : '--';
+  drawLeafletMap();
+}
+function updateMarkersList(){
+  const listCard = document.getElementById('markersListCard'); const list = document.getElementById('markersList');
+  if(markers.length===0){ listCard.style.display='none'; return; }
+  listCard.style.display='block'; list.innerHTML='';
+  markers.forEach((marker, idx)=>{
+    const type = markerTypes[marker.type]; const poleTypeInfo = marker.poleType ? `(${poleTypes[marker.poleType].label})` : '';
+    const spanText = (idx>0 && marker.spanLength) ? `<span class="span-length">${marker.spanLength.toFixed(0)}m Span</span>` : (marker.isLineBreak ? '<span class="span-length" style="color:#dc2626;">Line Broken</span>' : '');
+    const item = document.createElement('div'); item.className='marker-item';
+    item.innerHTML = `<div class="marker-info"><div class="marker-item-icon">${type.icon}</div><div class="marker-details"><h4>${type.label} #${idx+1} ${poleTypeInfo} ${spanText}</h4><div class="marker-coords">${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}</div></div></div><button class="delete-btn" onclick="deleteMarker(${marker.id})">🗑️</button>`;
+    list.appendChild(item);
+  });
+}
+
+/* --- load autosave on startup if present --- */
+function loadAutosaveIfExists(){
+  try{
+    const raw = localStorage.getItem(autosaveKey);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(!data) return;
+    if(confirm('Recovered autosave from ' + new Date(localStorage.getItem(autosaveKey + '_ts')*1).toLocaleString() + '. Restore it?')){ applyLoadedDataToState(data); markSaved(); alert('Autosave restored.'); }
+  }catch(e){ console.warn('No autosave or failed to load', e); }
+}
+loadAutosaveIfExists();
+
+/* --- initial draw & map --- */
 drawMap();
 initLeafletMap();
-// Initial check to hide/show pole type container
 selectMarkerType(selectedMarkerType);
-</script>
 
+/* --- ensure select list kept updated periodically --- */
+setInterval(loadSavedFilesSelect, 2000);
+</script>
 </body>
 </html>
