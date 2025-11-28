@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <style>
+/* ... (CSS is unchanged) ... */
 * {
 margin: 0;
 padding: 0;
@@ -1455,7 +1456,7 @@ return sitesJson ? JSON.parse(sitesJson) : {};
 
 // Function to save the current site to Local Storage
 function saveCurrentSite(showSuccessAlert = true) {
-stopTracking();
+// stopTracking(); // <-- REMOVED THE CAUSE OF THE STOPPAGE
 if (!currentSiteId) {
 // If it's a new survey, generate an ID
 currentSiteId = Date.now();
