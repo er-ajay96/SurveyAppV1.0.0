@@ -4,12 +4,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Electrical Line Survey V2.1</title>
+<title>Electrical Line Survey V2.0</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
 <style>
-/* ... (CSS is unchanged) ... */
 * {
 margin: 0;
 padding: 0;
@@ -333,7 +332,7 @@ margin-bottom: 8px;
 color: #374151;
 }
 
-.text-input-group input, .text-input-group select {
+.text-input-group input {
 width: 100%; 
 padding: 12px; 
 border: 1px solid #d1d5db; 
@@ -362,19 +361,7 @@ border: 2px solid #e5e7eb;
 border-radius: 12px;
 }
 
-/* Style for the new file management section */
-.file-management-grid {
-display: grid;
-grid-template-columns: 1fr;
-gap: 12px;
-margin-bottom: 16px;
-}
 
-.file-actions-grid {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 12px;
-}
 @media (max-width: 768px) {
 .stats-grid {
 grid-template-columns: 1fr;
@@ -391,10 +378,6 @@ grid-template-columns: 1fr;
 grid-template-columns: 1fr;
 }
 
-.file-actions-grid {
-grid-template-columns: repeat(2, 1fr);
-}
-
 .header {
 flex-direction: column;
 text-align: center;
@@ -407,14 +390,14 @@ text-align: center;
 </style>
 
 </head>
-<body onbeforeunload="warnBeforeUnload(event)">
+<body>
 <div class="container">
 <div class="card">
 <div class="header">
 <div class="header-left">
 <div class="icon-box">⚡</div>
 <div class="title-section">
-<h1>Electrical Line Survey V2.1</h1>
+<h1>Electrical Line Survey V2.0</h1>
 <p>GPS-based line tracking & mapping</p>
 </div>
 </div>
@@ -508,45 +491,21 @@ text-align: center;
 <h2>Interactive Map View (Leaflet/OSM)</h2>
 <div id="leafletMap"></div>
 </div>
-
 <div class="card">
-<h2>File & Site Management</h2>
-
-<div class="file-management-grid">
-<div class="text-input-group">
-<label for="savedSurveysSelect">Load Saved Survey</label>
-<select id="savedSurveysSelect" onchange="loadSelectedSite()"></select>
-</div>
-</div>
-
-<div class="file-actions-grid">
-<button class="btn btn-green" id="saveSiteBtn" onclick="saveCurrentSite()">
-💾 Save/Update
-</button>
-<button class="btn btn-blue" id="newSiteBtn" onclick="newSurveyPrompt()">
-✨ New Survey
-</button>
-<button class="btn btn-purple" id="renameSiteBtn" onclick="renameCurrentSite()">
-✏️ Rename Site
-</button>
-<button class="btn btn-red" id="deleteSiteBtn" onclick="deleteCurrentSite()">
-🗑️ Delete Site
-</button>
-</div>
-
-<div class="button-grid" style="margin-top: 16px;">
-<button class="btn btn-green" onclick="exportToJSONFile()">
-⬇️ Export JSON File
+<h2>Actions</h2>
+<div class="button-grid">
+<button class="btn btn-green" onclick="saveToJSON()">
+💾 Save JSON
 </button>
 <label class="btn btn-blue">
-⬆️ Import JSON File
-<input type="file" accept=".json" onchange="importFromJSONFile(event)">
+📤 Load JSON
+<input type="file" accept=".json" onchange="loadFromJSON(event)">
 </label>
 <button class="btn btn-purple" onclick="exportToPDF()">
-📄 Export PDF (PNG)
+📄 Export PDF
 </button>
 <button class="btn btn-red" onclick="clearAll()">
-⚠️ Clear ALL Data
+🗑️ Clear All
 </button>
 </div>
 </div>
@@ -558,36 +517,29 @@ text-align: center;
 
 </div> 
 <div class="footer-info">
-<p>Electrical Line Survey App | Version 2.1</p>
+<p>Electrical Line Survey App | Version 2.0</p>
 <p>Developed for Professional Field Use | For Support: +91-70187-56182/ErAjay.HPSEB@gmail.com</p>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-// --- V2.1: Local Storage and Site Management State ---
-const STORAGE_KEY = 'electricalSurveySites';
-let currentSiteId = null; // ID of the currently loaded or new survey
-let hasUnsavedChanges = false;
-// -----------------------------------------------------
-
 // State
 let isTracking = false;
-let isManualPosition = false; // NEW: Flag for manual position override
 let linePoints = []; // Stores all raw GPS points (actual path)
 let markers = []; // Stores key marked points (for line calculation)
 let totalDistance = 0;
 let currentPosition = null;
-let siteName = "New Survey Site"; // Default value will be set on initialization
+let siteName = document.getElementById('siteNameInput').value; // Initialize from input
 let selectedMarkerType = 'pole';
-let selectedPoleType = 'HT'; // New state for selected pole type (V2.0)
+let selectedPoleType = 'HT'; // New state for selected pole type
 let accuracy = null;
 let watchId = null;
 
 // Leaflet Map State
 let leafletMapInstance = null;
 let leafletMarkers = [];
-let leafletPolylines = []; // Changed to array for segmented lines (V2.0)
+let leafletPolylines = []; // Changed to array for segmented lines
 let mapTiles = null;
 let satelliteTiles = null;
 
@@ -605,10 +557,10 @@ const markerTypes = {
 pole: { label: 'Pole', icon: '⚡', color: '#3b82f6' },
 dtr: { label: 'DTR', icon: '🔌', color: '#ef4444' },
 structure: { label: 'Structure', icon: '🏗️', color: '#f59e0b' },
-other: { label: 'Other', icon: '❓', color: '#6b7280' } // V2.0 Addition
+other: { label: 'Other', icon: '❓', color: '#6b7280' }
 };
 
-// New Pole Type definitions for span color coding (V2.0)
+// New Pole Type definitions for span color coding (Requirement 1 & 2)
 const poleTypes = {
 'HT': { label: 'HT (High Tension)', color: '#dc2626' }, // Red
 'LT-1P': { label: 'LT 1-phase', color: '#2563eb' }, // Blue
@@ -639,9 +591,10 @@ return R * c;
 // Helper function to update total distance based on straight line between markers
 function updateTotalDistance() {
 totalDistance = 0;
+// Also update span lengths on markers
 if (markers.length >= 2) {
 for (let i = 1; i < markers.length; i++) {
-// Check if a line break exists between the two markers (V2.0)
+// Check if a line break exists between the two markers
 if (!markers[i-1].isLineBreak) {
 const dist = calculateDistance(
 markers[i-1].lat, markers[i-1].lng,
@@ -663,10 +616,8 @@ markers[0].spanLength = 0;
 // New function to update site name and redraw map
 function updateSiteName(name) {
 siteName = name;
-hasUnsavedChanges = true;
 drawMap();
-updateUI(); 
-saveCurrentSite(false); // Auto-save
+updateUI(); // Refreshes Leaflet Map
 }
 
 function startTracking() {
@@ -674,13 +625,8 @@ if (!navigator.geolocation) {
 alert('Geolocation is not supported by your browser');
 return;
 }
-// V2.1: Stop any existing tracking
-if (watchId) {
-stopTracking();
-}
 
 isTracking = true;
-isManualPosition = false; // Reset manual position flag
 initialFixAttempt = true;
 document.getElementById('startBtn').style.display = 'none';
 document.getElementById('stopBtn').style.display = 'flex';
@@ -694,7 +640,7 @@ if (initialFixAttempt) {
 gpsStatusElement.textContent = 'Warning: Low accuracy after 30 seconds. Proceeding with current accuracy.';
 gpsStatusElement.style.color = '#dc2626';
 document.getElementById('addMarkerBtn').disabled = false;
-initialFixAttempt = false; 
+initialFixAttempt = false; // Stop checking for the initial fix
 }
 }, INITIAL_FIX_TIMEOUT);
 
@@ -703,7 +649,7 @@ watchId = navigator.geolocation.watchPosition(
 (position) => {
 accuracy = position.coords.accuracy;
 
-// 1. Initial Fix Check
+// 1. Initial Fix Check (Only for the first good position)
 if (initialFixAttempt) {
 if (accuracy <= ACCURACY_THRESHOLD) {
 clearTimeout(initialFixTimeoutId);
@@ -712,13 +658,14 @@ document.getElementById('addMarkerBtn').disabled = false;
 gpsStatusElement.textContent = `GPS Fix Achieved: ±${accuracy.toFixed(1)}m`;
 gpsStatusElement.style.color = '#10b981';
 } else {
+// Update status while waiting
 gpsStatusElement.textContent = `Searching for high-accuracy GPS fix... (Current: ±${accuracy.toFixed(1)}m)`;
-updateUI(); 
+updateUI(); // Update accuracy display even if point is skipped
 return; 
 }
 }
 
-// 2. Accuracy Filter
+// 2. Accuracy Filter (For all subsequent points)
 if (accuracy > MAX_ACCURACY_ERROR) {
 console.warn('Point skipped due to poor accuracy:', accuracy.toFixed(1) + 'm');
 updateUI();
@@ -749,21 +696,19 @@ return;
 // If filters pass, record the point
 currentPosition = newPoint;
 linePoints.push(newPoint); 
-hasUnsavedChanges = true; // Data changed
 
 updateTotalDistance(); 
 
 updateUI();
-drawMap(); 
-drawLeafletMap(); 
-saveCurrentSite(false); // Auto-save
+drawMap(); // Schematic Map
+drawLeafletMap(); // Interactive Map
 },
 (error) => {
 console.error('Error getting location:', error);
 gpsStatusElement.textContent = `GPS Error: ${error.message}`;
 gpsStatusElement.style.color = '#dc2626';
 alert('Error getting location. Please enable GPS.');
-stopTracking(); 
+stopTracking(); // Stop tracking on error
 },
 {
 enableHighAccuracy: true,
@@ -781,13 +726,11 @@ watchId = null;
 clearTimeout(initialFixTimeoutId);
 initialFixAttempt = false;
 isTracking = false;
-isManualPosition = false; // Reset manual position flag
 document.getElementById('startBtn').style.display = 'flex';
 document.getElementById('stopBtn').style.display = 'none';
 document.getElementById('addMarkerBtn').disabled = true;
 gpsStatusElement.textContent = 'Tracking stopped.';
 gpsStatusElement.style.color = '#6b7280';
-saveCurrentSite(false); // Auto-save on stop
 }
 
 function selectMarkerType(type) {
@@ -795,76 +738,33 @@ selectedMarkerType = type;
 document.querySelectorAll('.marker-btn').forEach(btn => {
 btn.classList.remove('active');
 });
-// Use event.currentTarget for reliability
-event.currentTarget.classList.add('active');
+event.target.closest('.marker-btn').classList.add('active');
 document.getElementById('markerTypeLabel').textContent = markerTypes[type].label;
 
-// Show/Hide Pole Type selection based on marker type (V2.0)
+// Show/Hide Pole Type selection based on marker type
 poleTypeContainer.style.display = (type === 'pole' || type === 'dtr') ? 'block' : 'none';
 }
 
 function updateSelectedPoleType(event) {
 if (event.target.name === 'poleType') {
 selectedPoleType = event.target.value;
-hasUnsavedChanges = true;
-saveCurrentSite(false); // Auto-save
 }
 }
 
-// V2.0: Function to mark a line break
+// New function to mark a line break (Requirement 4)
 function breakLineContinuity() {
 if (markers.length > 0) {
+// Mark the last marker as the end of a segment
+// The next marker added will check for this flag on the previous marker
+// to set its spanLength to 0 and skip drawing a line segment.
 markers[markers.length - 1].isLineBreak = true;
-hasUnsavedChanges = true;
 updateMarkersList();
-updateUI();
-drawMap();
-drawLeafletMap();
-saveCurrentSite(true); // Auto-save and alert user
-alert('Line continuity broken. The next marker will start a new line segment.');
+alert('Line continuity broken. Next marker will start a new segment.');
 } else {
-alert('Please add a marker before breaking the line.');
+alert('No markers to break line from.');
 }
 }
 
-// V2.1: Function to start the line from a specific marker (manual position override)
-function startFromMarker(id) {
-const marker = markers.find(m => m.id == id);
-if (!marker) return;
-
-// 1. Stop live GPS feed
-if (isTracking) {
-stopTracking();
-}
-
-// 2. Set the current position to the marker's coordinates
-currentPosition = {
-lat: marker.lat,
-lng: marker.lng,
-timestamp: Date.now()
-};
-isManualPosition = true; // Flag this as a fixed, manual position
-accuracy = 0.0; // Fixed point accuracy
-
-// 3. Ensure continuity is broken from the previous line end
-// No need to call breakLineContinuity as addMarker will check the previous marker.
-if (markers.length > 0 && markers[markers.length - 1].id !== marker.id) {
-markers[markers.length - 1].isLineBreak = true;
-hasUnsavedChanges = true;
-}
-
-// 4. Update UI
-document.getElementById('addMarkerBtn').disabled = false;
-gpsStatusElement.textContent = `Manual Start: New line segment started from Marker #${markers.findIndex(m => m.id == id) + 1}. Click 'Add Pole' to continue.`;
-gpsStatusElement.style.color = '#a855f7'; 
-
-updateUI();
-drawMap(); 
-drawLeafletMap(); 
-updateMarkersList(); // To show line break status
-
-alert(`Successfully set current position to Marker #${markers.findIndex(m => m.id == id) + 1}. The next point you add will automatically start a new line segment from here.`);
-}
 
 function addMarker() {
 if (!currentPosition) {
@@ -872,7 +772,7 @@ alert('Waiting for GPS position...');
 return;
 }
 
-if (initialFixAttempt && !isManualPosition) {
+if (initialFixAttempt) {
 alert('Please wait for an accurate GPS fix before adding the first marker.');
 return;
 }
@@ -880,47 +780,37 @@ return;
 const newMarker = {
 id: Date.now(),
 type: selectedMarkerType,
-// Add new poleType property (V2.0)
+// Add new poleType property
 poleType: (selectedMarkerType === 'pole' || selectedMarkerType === 'dtr') ? selectedPoleType : null,
 lat: currentPosition.lat,
 lng: currentPosition.lng,
 timestamp: Date.now(),
 spanLength: 0, // Will be updated by updateTotalDistance
-isLineBreak: false // New property for line continuity (V2.0)
+isLineBreak: false // New property for line continuity
 };
 
-// Check if the previous marker was a line break, if so, ensure the new marker is linked to the "Manual Start" marker if it was one. 
-// A manual start automatically breaks the line of the previous sequence.
-// The primary check for line segment creation is done in drawMap and drawLeafletMap.
-
 markers.push(newMarker);
-hasUnsavedChanges = true; // Data changed
 updateTotalDistance(); 
 updateUI();
 drawMap();
 drawLeafletMap();
 updateMarkersList();
-
-// If in manual mode, stop showing the manual point after adding the marker
-if (isManualPosition) {
-isManualPosition = false;
-currentPosition = null;
-gpsStatusElement.textContent = `Manual segment point added. Tracking stopped. Click 'Start Tracking' to resume GPS feed or select another saved point.`;
-gpsStatusElement.style.color = '#6b7280';
-document.getElementById('addMarkerBtn').disabled = true;
-drawMap(); 
-drawLeafletMap();
 }
 
-saveCurrentSite(false); // Auto-save
-}
-
-// V2.1: Updated clearAll to use newSurvey to handle warning and local storage
 function clearAll() {
-if (confirm('⚠️ WARNING: Clear ALL data (Markers, Points, and Local Storage)? This is a full reset and cannot be undone.')) {
-newSurvey(true); // Hard reset
-// Optional: Clear all local storage keys starting with the prefix if a full app reset is desired
-// Object.keys(localStorage).filter(key => key.startsWith(STORAGE_KEY)).forEach(key => localStorage.removeItem(key));
+if (confirm('Clear all data? This cannot be undone.')) {
+stopTracking();
+linePoints = [];
+markers = [];
+totalDistance = 0;
+currentPosition = null;
+siteName = 'New Survey Site'; 
+document.getElementById('siteNameInput').value = siteName;
+updateUI();
+drawMap();
+drawLeafletMap(); // Clear Leaflet map
+updateMarkersList();
+gpsStatusElement.textContent = '';
 }
 }
 
@@ -929,20 +819,6 @@ document.getElementById('totalDistance').textContent = totalDistance.toFixed(1) 
 document.getElementById('pointsCount').textContent = linePoints.length;
 document.getElementById('markersCount').textContent = markers.length;
 document.getElementById('accuracy').textContent = accuracy ? `±${accuracy.toFixed(1)}m` : '--';
-document.getElementById('siteNameInput').value = siteName;
-
-// Update Save Button Text/Color based on unsaved state
-const saveBtn = document.getElementById('saveSiteBtn');
-if (hasUnsavedChanges) {
-saveBtn.textContent = '💾 Save/Update (Unsaved)';
-saveBtn.classList.remove('btn-green');
-saveBtn.classList.add('btn-red');
-} else {
-saveBtn.textContent = '💾 Site Saved';
-saveBtn.classList.remove('btn-red');
-saveBtn.classList.add('btn-green');
-}
-
 drawLeafletMap();
 }
 
@@ -963,12 +839,6 @@ const type = markerTypes[marker.type];
 const poleTypeInfo = marker.poleType ? `(${poleTypes[marker.poleType].label})` : '';
 const spanText = (idx > 0 && marker.spanLength) ? `<span class="span-length">${marker.spanLength.toFixed(0)}m Span</span>` : (marker.isLineBreak ? '<span class="span-length" style="color:#dc2626;">Line Broken</span>' : '');
 
-const item = document.createElement('div');
-item.className = 'marker-item';
-
-// V2.1: Add "Start From Here" button
-const startBtn = `<button class="btn btn-purple" style="padding: 5px 10px; font-size: 12px; height: 32px; margin-right: 8px; width: auto;" onclick="startFromMarker(${marker.id})">Start From Here</button>`;
-
 item.innerHTML = `
 <div class="marker-info">
 <div class="marker-item-icon">${type.icon}</div>
@@ -977,10 +847,7 @@ item.innerHTML = `
 <div class="marker-coords">${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}</div>
 </div>
 </div>
-<div style="display:flex; align-items:center;">
-${startBtn}
 <button class="delete-btn" onclick="deleteMarker(${marker.id})">🗑️</button>
-</div>
 `;
 list.appendChild(item);
 });
@@ -988,13 +855,11 @@ list.appendChild(item);
 
 function deleteMarker(id) {
 markers = markers.filter(m => m.id !== id);
-hasUnsavedChanges = true;
 updateTotalDistance(); 
 updateUI();
 drawMap();
 drawLeafletMap();
 updateMarkersList();
-saveCurrentSite(false); // Auto-save
 }
 
 // Function to calculate a new lat/lng by offsetting an existing one by meters
@@ -1010,7 +875,7 @@ const newLng = lng + (dx / (R * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI
 return { lat: newLat, lng: newLng };
 }
 
-// --- Schematic Map (Canvas) Function (Updated for V2.0/V2.1) ---
+// --- Schematic Map (Canvas) Function ---
 function drawMap() {
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
@@ -1031,11 +896,6 @@ ctx.fillText(`Site: ${siteName}`, 10, 25);
 
 // Use both markers and linePoints to determine the map bounds
 const pointsForBounds = [...markers, ...linePoints];
-
-if (currentPosition && isManualPosition) {
-pointsForBounds.push(currentPosition);
-}
-
 
 if (pointsForBounds.length === 0) {
 ctx.fillStyle = '#64748b';
@@ -1124,12 +984,12 @@ for (let i = 1; i < markers.length; i++) {
 const prevMarker = markers[i - 1];
 const currentMarker = markers[i];
 
-// Check for line break (V2.0)
+// Check for line break
 if (prevMarker.isLineBreak) {
-continue; 
+continue; // Skip drawing this segment
 }
 
-// Determine span color based on the current marker's poleType (V2.0 Requirement 3)
+// Determine span color based on the current marker's poleType (Requirement 3)
 let spanColor = '#3b82f6'; // Default Blue
 if (currentMarker.type === 'pole' || currentMarker.type === 'dtr') {
 spanColor = poleTypes[currentMarker.poleType] ? poleTypes[currentMarker.poleType].color : '#3b82f6';
@@ -1151,7 +1011,7 @@ const x = toX(marker.lng);
 const y = toY(marker.lat);
 const markerNumber = idx + 1;
 
-// Determine marker color (use pole type color if applicable) (V2.0)
+// Determine marker color (use pole type color if applicable)
 let markerColor = type.color;
 let poleTypeLabel = '';
 if (marker.type === 'pole' || marker.type === 'dtr') {
@@ -1181,7 +1041,7 @@ ctx.textBaseline = 'top';
 ctx.fillText(markerNumber, x + 18, y - 10);
 
 
-// Draw Span Length (on line segment, only for markers 2 and up and not a line break) (V2.0)
+// Draw Span Length (on line segment, only for markers 2 and up and not a line break)
 if (idx > 0 && marker.spanLength > 0) {
 const prevMarker = markers[idx - 1];
 const prevX = toX(prevMarker.lng);
@@ -1198,7 +1058,7 @@ spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b
 
 // Draw a background box for the text to improve readability over the line
 ctx.fillStyle = '#ffffff';
-ctx.fillRect(midX - 25, midY - 10, 50, 20); 
+ctx.fillRect(midX - 25, midY - 10, 50, 20); // Adjust size as needed
 
 ctx.fillStyle = spanColor;
 ctx.font = 'bold 12px Arial';
@@ -1213,23 +1073,6 @@ if (currentPosition) {
 const x = toX(currentPosition.lng);
 const y = toY(currentPosition.lat);
 
-// V2.1: Change color/style for manual position
-if (isManualPosition) {
-ctx.fillStyle = '#a855f7'; // Purple for manual start point
-ctx.strokeStyle = '#ffffff';
-ctx.lineWidth = 3;
-
-ctx.beginPath();
-ctx.arc(x, y, 10, 0, Math.PI * 2);
-ctx.fill();
-ctx.stroke();
-
-ctx.fillStyle = '#ffffff';
-ctx.font = 'bold 12px Arial';
-ctx.fillText('START', x, y + 1); // Text overlay
-
-} else {
-// Original GPS Position style
 ctx.fillStyle = '#10b981';
 ctx.beginPath();
 ctx.arc(x, y, 8, 0, Math.PI * 2);
@@ -1239,12 +1082,10 @@ ctx.strokeStyle = '#ffffff';
 ctx.lineWidth = 2;
 ctx.stroke();
 }
-
-}
 }
 
 
-// --- Leaflet Map Functions (Updated for V2.0/V2.1) ---
+// --- Leaflet Map Functions ---
 
 function initLeafletMap() {
 // Determine the initial center point
@@ -1267,20 +1108,24 @@ leafletMapInstance = L.map('leafletMap').setView([centerLat, centerLng], 15);
 
 // 2. Define Tile Layers (Map Styles)
 
+// Esri World Imagery (Satellite/Hybrid) for the "Traffic Map" look
 satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 }).addTo(leafletMapInstance);
 
+// OpenStreetMap Standard Tiles (Optional, good fallback)
 mapTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 });
 
+// Create a base map control for switching between map styles (optional but helpful)
 const baseMaps = {
 "Satellite View": satelliteTiles,
 "Street Map": mapTiles
 };
 L.control.layers(baseMaps).addTo(leafletMapInstance);
 
+// Initial draw
 drawLeafletMap();
 }
 
@@ -1296,7 +1141,7 @@ leafletMarkers = [];
 leafletPolylines.forEach(p => p.remove());
 leafletPolylines = [];
 
-// 2. Draw the main line (Polyline Segments) (V2.0)
+// 2. Draw the main line (Polyline Segments)
 let segmentCoordinates = [];
 let currentSegmentColor = '#3b82f6'; // Default color
 
@@ -1308,9 +1153,10 @@ const prevMarker = markers[i - 1];
 
 // Check if a segment should be drawn
 if (!prevMarker.isLineBreak) {
+// Segment is between previous marker and current marker
 segmentCoordinates.push([marker.lat, marker.lng]);
 
-// Determine span color based on the current marker's poleType 
+// Determine span color based on the current marker's poleType (Requirement 3)
 let nextSegmentColor = '#3b82f6';
 if (marker.type === 'pole' || marker.type === 'dtr') {
 nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
@@ -1319,7 +1165,7 @@ nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color
 // If segment color is changing or this is the last marker, draw the segment
 if (nextSegmentColor !== currentSegmentColor || i === markers.length - 1) {
 const polyline = L.polyline(segmentCoordinates, {
-color: currentSegmentColor, 
+color: currentSegmentColor, // Color of the segment ending at this point
 weight: 4,
 opacity: 1.0,
 dashArray: '8, 8'
@@ -1405,34 +1251,7 @@ ${spanText}
 leafletMarkers.push(lMarker);
 });
 
-
-// 4. Draw Current Position (V2.1)
-if (currentPosition) {
-let currentMarker;
-if (isManualPosition) {
-// Use a different icon for manual override
-currentMarker = L.circleMarker([currentPosition.lat, currentPosition.lng], {
-radius: 8,
-color: '#a855f7', // Purple
-fillColor: '#a855f7',
-fillOpacity: 1,
-weight: 3
-}).bindPopup('Manual Start Location').addTo(leafletMapInstance);
-} else {
-// Use default green circle for live GPS
-currentMarker = L.circleMarker([currentPosition.lat, currentPosition.lng], {
-radius: 5,
-color: '#ffffff',
-fillColor: '#10b981',
-fillOpacity: 1,
-weight: 2
-}).bindPopup(`Live GPS: ±${accuracy.toFixed(1)}m`).addTo(leafletMapInstance);
-}
-leafletMarkers.push(currentMarker); // Add to list for easy removal/clearing
-}
-
-
-// 5. Center and zoom the map to fit all markers
+// 4. Center and zoom the map to fit all markers
 if (markers.length > 0) {
 const allLatLngs = markers.map(m => [m.lat, m.lng]);
 if (allLatLngs.length > 1) {
@@ -1446,294 +1265,61 @@ leafletMapInstance.setView(allLatLngs[0], 17);
 // --- End Leaflet Map Functions ---
 
 
-// --- V2.1: Local Storage and Site Management Functions ---
-
-// Function to retrieve all saved sites from Local Storage
-function getSavedSites() {
-const sitesJson = localStorage.getItem(STORAGE_KEY);
-return sitesJson ? JSON.parse(sitesJson) : {};
-}
-
-// Function to save the current site to Local Storage
-function saveCurrentSite(showSuccessAlert = true) {
-// stopTracking(); // <-- REMOVED THE CAUSE OF THE STOPPAGE
-if (!currentSiteId) {
-// If it's a new survey, generate an ID
-currentSiteId = Date.now();
-}
-
-const sites = getSavedSites();
-const siteData = {
-id: currentSiteId,
-siteName: siteName,
-lastUpdated: new Date().toISOString(),
-totalDistance: totalDistance,
-linePoints: linePoints,
-markers: markers.map((m, idx) => ({
-...m,
-index: idx + 1,
-typeLabel: markerTypes[m.type].label,
-poleTypeLabel: m.poleType ? poleTypes[m.poleType].label : 'N/A',
-spanLength: m.spanLength ? m.spanLength.toFixed(2) : 'N/A',
-isLineBreak: m.isLineBreak || false,
-lat: m.lat,
-lng: m.lng
-}))
-};
-
-sites[currentSiteId] = siteData;
-localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
-hasUnsavedChanges = false;
-populateSavedSurveysSelect(currentSiteId);
-updateUI();
-if (showSuccessAlert) {
-alert(`Site "${siteName}" saved successfully!`);
-}
-}
-
-// Function to load a site from Local Storage
-function loadSiteById(id) {
-const sites = getSavedSites();
-const data = sites[id];
-if (!data) return false;
-
-stopTracking();
-currentSiteId = id;
-linePoints = data.linePoints || [];
-
-// Reconstruct markers, handling properties
-markers = (data.markers || []).map(m => ({
-...m,
-spanLength: m.spanLength ? parseFloat(m.spanLength) : 0,
-type: m.type || 'pole',
-poleType: m.poleType || (m.type === 'pole' || m.type === 'dtr' ? 'HT' : null),
-isLineBreak: m.isLineBreak || false,
-lat: m.lat,
-lng: m.lng
-})); 
-siteName = data.siteName || 'New Survey Site'; 
-document.getElementById('siteNameInput').value = siteName; 
-
-updateTotalDistance(); 
-hasUnsavedChanges = false;
-updateUI();
-drawMap();
-drawLeafletMap(); 
-updateMarkersList();
-
-return true;
-}
-
-// Function to populate the select dropdown with saved sites
-function populateSavedSurveysSelect(selectedId = null) {
-const select = document.getElementById('savedSurveysSelect');
-const sites = getSavedSites();
-select.innerHTML = '';
-let hasSites = false;
-
-const defaultOption = document.createElement('option');
-defaultOption.value = '';
-defaultOption.textContent = '-- Select a Survey --';
-select.appendChild(defaultOption);
-
-// Get IDs and sort by lastUpdated
-const sortedIds = Object.keys(sites).sort((a, b) => {
-return new Date(sites[b].lastUpdated) - new Date(sites[a].lastUpdated);
-});
-
-sortedIds.forEach(id => {
-hasSites = true;
-const site = sites[id];
-const option = document.createElement('option');
-option.value = id;
-option.textContent = `${site.siteName} (${new Date(site.lastUpdated).toLocaleTimeString()})`;
-select.appendChild(option);
-if (id == selectedId) {
-option.selected = true;
-}
-});
-
-document.getElementById('saveSiteBtn').disabled = !currentSiteId;
-document.getElementById('deleteSiteBtn').disabled = !currentSiteId;
-document.getElementById('renameSiteBtn').disabled = !currentSiteId;
-
-if (!selectedId && hasSites) {
-select.selectedIndex = 0; // Select the placeholder
-}
-}
-
-// Function called when the user selects an option from the dropdown
-function loadSelectedSite() {
-const select = document.getElementById('savedSurveysSelect');
-const selectedId = select.value;
-if (!selectedId) return;
-
-if (hasUnsavedChanges && !confirm('⚠️ WARNING: You have unsaved changes. Load new survey anyway?')) {
-// Reset the dropdown to the current site if the user cancels
-populateSavedSurveysSelect(currentSiteId);
-return;
-}
-
-if (loadSiteById(selectedId)) {
-alert(`Survey "${siteName}" loaded successfully!`);
-} else {
-alert('Error loading survey.');
-}
-}
-
-// Function to start a new survey, with or without a warning
-function newSurvey(forceClear = false) {
-if (!forceClear && hasUnsavedChanges && !confirm('⚠️ WARNING: You have unsaved changes. Start a new survey and discard current data?')) {
-return;
-}
-stopTracking();
-linePoints = [];
-markers = [];
-totalDistance = 0;
-currentPosition = null;
-currentSiteId = null;
-siteName = 'New Survey Site'; 
-hasUnsavedChanges = true; // New survey is inherently unsaved
-document.getElementById('siteNameInput').value = siteName;
-updateUI();
-drawMap();
-drawLeafletMap(); 
-updateMarkersList();
-gpsStatusElement.textContent = '';
-populateSavedSurveysSelect(null);
-document.getElementById('saveSiteBtn').disabled = false;
-alert('New Survey started. Please enter a Site Name and click "Start Tracking".');
-}
-
-function newSurveyPrompt() {
-if (currentSiteId) {
-// If an existing site is loaded, ask if they want to save it first
-if (hasUnsavedChanges && confirm(`Save "${siteName}" before starting a new survey?`)) {
-saveCurrentSite(true);
-}
-}
-newSurvey();
-}
-
-function renameCurrentSite() {
-if (!currentSiteId) {
-alert("Please save the current survey first.");
-return;
-}
-const newName = prompt(`Enter new name for "${siteName}":`);
-if (newName && newName.trim() !== siteName) {
-siteName = newName.trim();
-document.getElementById('siteNameInput').value = siteName;
-hasUnsavedChanges = true;
-saveCurrentSite(true);
-}
-}
-
-function deleteCurrentSite() {
-if (!currentSiteId) {
-alert("No survey is currently loaded or saved.");
-return;
-}
-if (confirm(`⚠️ WARNING: Are you sure you want to permanently delete the site "${siteName}" from browser storage?`)) {
-const sites = getSavedSites();
-delete sites[currentSiteId];
-localStorage.setItem(STORAGE_KEY, JSON.stringify(sites));
-alert(`Site "${siteName}" deleted.`);
-newSurvey(true); // Start a new, fresh survey
-}
-}
-
-// Warning before browser window closes
-function warnBeforeUnload(event) {
-if (hasUnsavedChanges) {
-event.preventDefault(); // Prevents the browser from navigating away
-event.returnValue = ''; // Standard way to set the warning message
-return ''; // For some older browsers
-}
-}
-
-// --- File Export/Import Functions (Updated for V2.1 site management) ---
-
-function getExportData() {
-// This uses the same data structure as the Local Storage site data
-return {
-version: '2.1', 
+function saveToJSON() {
+const data = {
+version: '2.0', // Updated version number
 created: new Date().toISOString(),
 siteName: siteName, 
 totalDistance: totalDistance, 
 linePoints: linePoints,
 markers: markers.map((m, idx) => ({
 ...m,
-index: idx + 1, 
+index: idx + 1, // Add sequential index for better reporting
 typeLabel: markerTypes[m.type].label,
-poleTypeLabel: m.poleType ? poleTypes[m.poleType].label : 'N/A', 
-spanLength: m.spanLength ? m.spanLength.toFixed(2) : 'N/A', 
-isLineBreak: m.isLineBreak || false, 
-lat: m.lat,
-lng: m.lng
+poleTypeLabel: m.poleType ? poleTypes[m.poleType].label : 'N/A', // New pole type label
+spanLength: m.spanLength ? m.spanLength.toFixed(2) : 'N/A', // Include span length
+isLineBreak: m.isLineBreak || false // Include line break status
 }))
 };
-}
 
-// V2.1: Export to JSON file with site name in filename
-function exportToJSONFile() {
-const data = getExportData();
 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-// Use siteName for the filename
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v2-1-${Date.now()}.json`;
+a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v2-${Date.now()}.json`;
 a.click();
 URL.revokeObjectURL(url);
-alert(`Site data exported as JSON file: ${a.download}`);
 }
 
-// V2.1: Import from JSON file
-function importFromJSONFile(event) {
+function loadFromJSON(event) {
 const file = event.target.files[0];
 if (!file) return;
-
-if (hasUnsavedChanges && !confirm('⚠️ WARNING: You have unsaved changes. Import file and discard current data?')) {
-event.target.value = '';
-return;
-}
 
 const reader = new FileReader();
 reader.onload = (e) => {
 try {
 const data = JSON.parse(e.target.result);
-
-// --- New Survey Start ---
-stopTracking();
 linePoints = data.linePoints || [];
-currentSiteId = Date.now(); // Give imported data a new unique ID
 
 // Reconstruct markers, handling new V2.0 properties and backward compatibility
 markers = (data.markers || []).map(m => ({
 ...m,
-// If spanLength is a string from old export, parse it
-spanLength: m.spanLength ? (typeof m.spanLength === 'string' ? parseFloat(m.spanLength) : m.spanLength) : 0,
+spanLength: m.spanLength ? parseFloat(m.spanLength) : 0,
 type: m.type || 'pole',
-poleType: m.poleType || (m.type === 'pole' || m.type === 'dtr' ? 'HT' : null), // Default poleType
-isLineBreak: m.isLineBreak || false, 
+poleType: m.poleType || 'HT', // Default to HT if not present (V1.0 backward compatibility)
+isLineBreak: m.isLineBreak || false, // Default to false if not present (V1.0 backward compatibility)
 lat: m.lat,
-lng: m.lng,
-id: m.id || Date.now() + Math.random() * 100 // Ensure unique ID if not present
+lng: m.lng
 })); 
-siteName = data.siteName || 'Imported Survey'; 
-// --- End New Survey Start ---
+siteName = data.siteName || 'New Survey Site'; 
+document.getElementById('siteNameInput').value = siteName; 
 
-updateTotalDistance(); 
-hasUnsavedChanges = true; // Imported data needs to be saved to local storage
+updateTotalDistance(); // Recalculate distance and spans based on loaded data
 updateUI();
 drawMap();
-drawLeafletMap(); 
+drawLeafletMap(); // Initialize/refresh Leaflet map
 updateMarkersList();
-
-// Save the imported site to local storage immediately
-saveCurrentSite(false); 
-alert(`Survey data loaded and saved to browser storage successfully! (Site: ${siteName}, Version: ${data.version || 'Unknown'})`);
+alert(`Survey data loaded successfully! (Version: ${data.version || '1.0'})`);
 } catch (error) {
 console.error("Load JSON Error:", error);
 alert('Error loading file. Please check the file format.');
@@ -1742,7 +1328,6 @@ alert('Error loading file. Please check the file format.');
 reader.readAsText(file);
 event.target.value = '';
 }
-
 
 function exportToPDF() {
 const canvas = document.getElementById('mapCanvas');
@@ -1756,7 +1341,7 @@ pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
 
 pdfCtx.fillStyle = '#000000';
 pdfCtx.font = 'bold 24px Arial';
-pdfCtx.fillText('Electrical Line Survey Report (V2.1)', 50, 40);
+pdfCtx.fillText('Electrical Line Survey Report (V2.0)', 50, 40);
 
 pdfCtx.font = '14px Arial';
 pdfCtx.fillText(`Site Name: ${siteName}`, 50, 70); 
@@ -1781,7 +1366,7 @@ pdfCtx.fillText(type.label, 600, legendY - 5);
 legendY += 30;
 });
 
-// Span Color Legend (V2.0)
+// Span Color Legend
 pdfCtx.font = 'bold 16px Arial';
 pdfCtx.fillText('Span Color Legend (Line Type to End Marker):', 50, 710);
 let spanLegendY = 740;
@@ -1820,7 +1405,7 @@ pdfCtx.fillStyle = '#6b7280';
 pdfCtx.font = '10px Arial';
 pdfCtx.textAlign = 'center';
 pdfCtx.fillText(
-'Developed for Professional Field Use | Survey App Version 2.1 | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com',
+'Developed for Professional Field Use | Survey App Version 2.0 | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com]',
 pdfCanvas.width / 2,
 980 
 );
@@ -1829,42 +1414,18 @@ pdfCanvas.toBlob((blob) => {
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-// Use siteName for the filename
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v2-1-${Date.now()}.png`;
+a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v2-${Date.now()}.png`;
 a.click();
 URL.revokeObjectURL(url);
 alert('Report exported successfully as PNG image!');
 });
 }
 
-// --- Initialization Logic ---
-function initializeApp() {
-// 1. Check for 'New Survey Site' in local storage or start a new one
-const sites = getSavedSites();
-const siteKeys = Object.keys(sites);
-
-if (siteKeys.length > 0) {
-// Find the most recently updated site and load it
-const latestSiteId = siteKeys.sort((a, b) => new Date(sites[b].lastUpdated) - new Date(sites[a].lastUpdated))[0];
-loadSiteById(latestSiteId);
-alert(`Loaded last active site: "${sites[latestSiteId].siteName}"`);
-} else {
-// Start a fresh, new survey
-newSurvey(true);
-siteName = 'New Survey Site'; 
-currentSiteId = null;
-hasUnsavedChanges = false;
-}
-populateSavedSurveysSelect(currentSiteId);
-updateUI(); // Must be called to ensure UI reflects loaded state
+// Initialize
 drawMap();
 initLeafletMap();
 // Initial check to hide/show pole type container
 selectMarkerType(selectedMarkerType);
-}
-
-// Run initialization when the script loads
-initializeApp();
 </script>
 
 </body>
