@@ -1634,64 +1634,78 @@ alert('Report exported successfully as PNG image!');
 }
 
 function exportToCSV() {
-if (markers.length === 0) {
-alert('No markers to export.');
-return;
+  if (markers.length === 0) {
+    alert('No markers to export.');
+    return;
+  }
+
+  // Updated header: SiteName, SpanDescription first, then existing columns
+  let csvContent = "Site Name,Span Description,Marker #,Type,Pole Type,Latitude,Longitude,Span Length (m),Connected From Marker,Progressive Total Length (m),Line Break\n";
+
+  let cumulativeDistance = 0;
+
+  markers.forEach((marker, idx) => {
+    const markerNumber = idx + 1;
+    const typeLabel = markerTypes[marker.type].label;
+    const poleTypeLabel = marker.poleType ? poleTypes[marker.poleType].label : 'N/A';
+    const span = marker.spanLength || 0; 
+    const lat = marker.lat.toFixed(6);
+    const lng = marker.lng.toFixed(6);
+    const isLineBreak = marker.isLineBreak ? 'YES' : 'NO';
+
+    let connectedFrom = '';
+    if (marker.isLineBreak && marker.startFromMarkerId) {
+      const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
+      connectedFrom = `Marker #${startMarkerIdx + 1} (Jump)`;
+    } else if (!marker.isLineBreak && idx > 0) {
+      connectedFrom = `Marker #${idx}`;
+    } else {
+      connectedFrom = 'N/A';
+    }
+
+    if (span > 0) {
+      cumulativeDistance += span;
+    }
+
+    const spanText = (idx === 0) ? '0.00' : span.toFixed(2);
+
+    // Build Span Description
+    let spanDescription = "N/A";
+    if (marker.isLineBreak && marker.startFromMarkerId && marker.spanLength > 0) {
+      const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
+      spanDescription = `Marker ${startMarkerIdx + 1} - Marker ${idx + 1}`;
+    } else if (idx > 0 && marker.spanLength && !marker.isLineBreak) {
+      spanDescription = `Marker ${idx} - Marker ${idx + 1}`;
+    }
+
+    const row = [
+      siteName,                // new first column
+      spanDescription,         // new second column
+      markerNumber,
+      typeLabel,
+      poleTypeLabel,
+      lat,
+      lng,
+      spanText,
+      connectedFrom,
+      cumulativeDistance.toFixed(2),
+      isLineBreak
+    ].map(item => `"${item}"`).join(',');
+
+    csvContent += row + "\n";
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-data-v3-7-${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  alert('Data exported successfully as CSV/Excel!');
 }
 
-let csvContent = "Marker #,Type,Pole Type,Latitude,Longitude,Span Length (m),Connected From Marker,Progressive Total Length (m),Line Break\n";
 
-let cumulativeDistance = 0;
-
-markers.forEach((marker, idx) => {
-const markerNumber = idx + 1;
-const typeLabel = markerTypes[marker.type].label;
-const poleTypeLabel = marker.poleType ? poleTypes[marker.poleType].label : 'N/A';
-const span = marker.spanLength || 0; 
-const lat = marker.lat.toFixed(6);
-const lng = marker.lng.toFixed(6);
-const isLineBreak = marker.isLineBreak ? 'YES' : 'NO';
-
-let connectedFrom = '';
-if (marker.isLineBreak && marker.startFromMarkerId) {
-const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-connectedFrom = `Marker #${startMarkerIdx + 1} (Jump)`;
-} else if (!marker.isLineBreak && idx > 0) {
-connectedFrom = `Marker #${idx}`;
-} else {
-connectedFrom = 'N/A';
-}
-
-if (span > 0) {
-cumulativeDistance += span;
-}
-
-const spanText = (idx === 0) ? '0.00' : span.toFixed(2);
-
-const row = [
-markerNumber,
-typeLabel,
-poleTypeLabel,
-lat,
-lng,
-spanText,
-connectedFrom,
-cumulativeDistance.toFixed(2),
-isLineBreak
-].map(item => `"${item}"`).join(',');
-
-csvContent += row + "\n";
-});
-
-const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-data-v3-7-${Date.now()}.csv`;
-a.click();
-URL.revokeObjectURL(url);
-alert('Data exported successfully as CSV/Excel!');
-}
 
 drawMap();
 initLeafletMap();
