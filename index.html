@@ -1656,9 +1656,9 @@ function exportToCSV() {
     let connectedFrom = '';
     if (marker.isLineBreak && marker.startFromMarkerId) {
       const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-      connectedFrom = `Marker #${startMarkerIdx + 1} (Jump)`;
+      connectedFrom = `${markerTypes[markers[startMarkerIdx].type].label} #${startMarkerIdx + 1} (Jump)`;
     } else if (!marker.isLineBreak && idx > 0) {
-      connectedFrom = `Marker #${idx}`;
+      connectedFrom = `${markerTypes[markers[idx - 1].type].label} #${idx}`;
     } else {
       connectedFrom = 'N/A';
     }
@@ -1669,13 +1669,13 @@ function exportToCSV() {
 
     const spanText = (idx === 0) ? '0.00' : span.toFixed(2);
 
-    // Build Span Description
+    // Build human-friendly Span Description
     let spanDescription = "N/A";
     if (marker.isLineBreak && marker.startFromMarkerId && marker.spanLength > 0) {
       const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-      spanDescription = `Marker ${startMarkerIdx + 1} - Marker ${idx + 1}`;
+      spanDescription = `${markerTypes[markers[startMarkerIdx].type].label} #${startMarkerIdx + 1} → ${typeLabel} #${idx + 1}`;
     } else if (idx > 0 && marker.spanLength && !marker.isLineBreak) {
-      spanDescription = `Marker ${idx} - Marker ${idx + 1}`;
+      spanDescription = `${markerTypes[markers[idx - 1].type].label} #${idx} → ${typeLabel} #${idx + 1}`;
     }
 
     const row = [
@@ -1704,9 +1704,6 @@ function exportToCSV() {
   URL.revokeObjectURL(url);
   alert('Data exported successfully as CSV/Excel!');
 }
-
-
-
 drawMap();
 initLeafletMap();
 selectMarkerType(selectedMarkerType);
