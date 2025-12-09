@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Electrical Line Survey V3.7</title>
+<title>Electrical Line Survey V3.8 (Dynamic)</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
@@ -173,38 +173,77 @@ color: white;
 background: #9333ea;
 }
 
-.marker-types {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 12px;
-margin: 16px 0;
+/* --- New / Modified Styles for Dynamic Selection --- */
+
+.selection-group {
+margin-bottom: 20px;
+padding: 15px;
+border: 1px solid #e5e7eb;
+border-radius: 12px;
+background-color: #f9fafb;
 }
 
-.pole-type-selection {
-margin-top: 12px;
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 8px;
+.selection-group-title {
+display: block;
+font-weight: 700;
+margin-bottom: 12px;
+color: #1f2937;
+font-size: 16px;
 }
 
-.pole-type-selection label {
+.radio-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 10px;
+}
+
+.radio-group label {
 display: flex;
 align-items: center;
-padding: 8px;
-border: 1px solid #d1d5db;
+padding: 10px;
+border: 2px solid #d1d5db;
 border-radius: 8px;
 font-size: 14px;
 cursor: pointer;
-transition: background-color 0.2s;
+transition: all 0.2s;
+background-color: white;
 }
 
-.pole-type-selection input[type="radio"] {
+.radio-group input[type="radio"] {
 margin-right: 8px;
 accent-color: #3b82f6;
 }
 
-.pole-type-selection label:hover {
-background-color: #f3f4f6;
+.radio-group input[type="radio"]:checked + span {
+font-weight: 600;
+color: #3b82f6;
+}
+
+.radio-group input[type="radio"]:checked ~ label {
+border-color: #3b82f6;
+background-color: #eff6ff;
+}
+
+select {
+width: 100%;
+padding: 12px;
+border: 1px solid #d1d5db;
+border-radius: 8px;
+font-size: 16px;
+background-color: white;
+appearance: none;
+-webkit-appearance: none;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+background-repeat: no-repeat;
+background-position: right 12px center;
+background-size: 16px;
+}
+
+.marker-types {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 12px;
+margin-top: 16px;
 }
 
 .marker-btn {
@@ -234,6 +273,9 @@ margin-bottom: 8px;
 .marker-label {
 font-size: 14px;
 }
+
+/* --- End of New / Modified Styles --- */
+
 
 .button-grid {
 display: grid;
@@ -364,7 +406,8 @@ grid-template-columns: 1fr;
 .marker-types {
 grid-template-columns: repeat(2, 1fr);
 }
-.pole-type-selection {
+
+.radio-grid {
 grid-template-columns: 1fr;
 }
 
@@ -396,7 +439,7 @@ text-align: center;
 <div class="header-left">
 <div class="icon-box">⚡</div>
 <div class="title-section">
-<h1>Electrical Line Survey V3.7</h1>
+<h1>Electrical Line Survey V3.8 (Dynamic)</h1>
 <p>GPS-based line tracking & mapping</p>
 </div>
 </div>
@@ -430,6 +473,23 @@ text-align: center;
 <input type="text" id="siteNameInput" value="New Survey Site" oninput="updateSiteName(this.value)">
 </div>
 
+<div class="selection-group" style="margin-top: 20px;">
+<label class="selection-group-title">0. Select Survey Type</label>
+<div class="radio-grid">
+<div class="radio-group">
+<label>
+<input type="radio" name="surveyType" value="proposed" onchange="updateSurveyType(this.value)" checked>
+<span>Proposed Line Survey</span>
+</label>
+</div>
+<div class="radio-group">
+<label>
+<input type="radio" name="surveyType" value="existing" onchange="updateSurveyType(this.value)">
+<span>Existing Line Survey</span>
+</label>
+</div>
+</div>
+</div>
 <button class="btn btn-green" id="startBtn" onclick="startTracking()">
 ▶ Start Tracking
 </button>
@@ -439,36 +499,60 @@ text-align: center;
 <div id="gpsStatus" style="margin-top: 10px; color: #f97316; font-weight: 600;"></div> 
 
 <div style="margin-top: 20px;">
-<label style="display: block; font-weight: 600; margin-bottom: 12px; color: #374151;">Select Marker Type</label>
-<div class="marker-types">
-<button class="marker-btn active" onclick="selectMarkerType('pole')">
-<div class="marker-icon">💈</div>
-<div class="marker-label">Pole</div>
-</button>
-<button class="marker-btn" onclick="selectMarkerType('dtr')">
-<div class="marker-icon">🟥</div>
-<div class="marker-label">DTR</div>
-</button>
-<button class="marker-btn" onclick="selectMarkerType('structure')">
-<div class="marker-icon">⭕</div>
-<div class="marker-label">Structure</div>
-</button>
-<button class="marker-btn" onclick="selectMarkerType('other')">
-<div class="marker-icon">❓</div>
-<div class="marker-label">Other</div>
-</button>
+
+<div class="selection-group">
+<label class="selection-group-title">1. Select Line Type</label>
+
+<div class="radio-grid" id="lineTypeSelection">
+<div class="radio-group">
+<label>
+<input type="radio" name="lineType" value="HT_33kV" data-main-type="HT" onchange="updateLineSubtype(this.value)">
+<span>33 KV HT Line</span>
+</label>
+</div>
+<div class="radio-group">
+<label>
+<input type="radio" name="lineType" value="HT_22kV" data-main-type="HT" onchange="updateLineSubtype(this.value)">
+<span>22 kV HT Line</span>
+</label>
+</div>
+<div class="radio-group">
+<label>
+<input type="radio" name="lineType" value="HT_11kV" data-main-type="HT" onchange="updateLineSubtype(this.value)" checked>
+<span>11 KV HT Line</span>
+</label>
 </div>
 
-<div id="poleTypeContainer">
-<label style="display: block; font-weight: 600; margin-top: 12px; margin-bottom: 8px; color: #374151;">Select Pole Type (Required for Span Color)</label>
-<div class="pole-type-selection" onchange="updateSelectedPoleType(event)">
-<label><input type="radio" name="poleType" value="HT" checked> HT (High Tension)</label>
-<label><input type="radio" name="poleType" value="LT-1P"> LT 1-phase</label>
-<label><input type="radio" name="poleType" value="LT-2P"> LT 2-phase</label>
-<label><input type="radio" name="poleType" value="LT-3P"> LT 3-phase</label>
+<div class="radio-group">
+<label>
+<input type="radio" name="lineType" value="LT_3P" data-main-type="LT" onchange="updateLineSubtype(this.value)">
+<span>3-phase LT Line</span>
+</label>
+</div>
+<div class="radio-group">
+<label>
+<input type="radio" name="lineType" value="LT_2P" data-main-type="LT" onchange="updateLineSubtype(this.value)">
+<span>2-phase LT Line</span>
+</label>
+</div>
+<div class="radio-group">
+<label>
+<input type="radio" name="lineType" value="LT_1P" data-main-type="LT" onchange="updateLineSubtype(this.value)">
+<span>1-phase LT Line</span>
+</label>
+</div>
 </div>
 </div>
 
+<div class="selection-group">
+<label class="selection-group-title" for="conductorTypeSelect">2. Select Conductor Type</label>
+<select id="conductorTypeSelect" onchange="updateConductorType(this.value)">
+</select>
+</div>
+
+<label style="display: block; font-weight: 600; margin-bottom: 12px; color: #374151;">3. Select Marker Type</label>
+<div class="marker-types" id="markerTypeSelection">
+</div>
 </div>
 
 <button class="btn btn-blue" id="addMarkerBtn" onclick="addMarker()" disabled style="margin-top: 16px;">
@@ -515,7 +599,7 @@ text-align: center;
 
 </div> 
 <div class="footer-info">
-<p>Electrical Line Survey App | Version 3.7</p>
+<p>Electrical Line Survey App | Version 3.8 (Dynamic)</p>
 <p>Developed for Professional Field Use | For Support: +91-70187-56182/ErAjay.HPSEB@gmail.com</p>
 <p>© 2025–26 ErAjay Kumar . All rights reserved.</p>
 </div>
@@ -531,12 +615,17 @@ let markers = [];
 let totalDistance = 0;
 let currentPosition = null;
 let siteName = document.getElementById('siteNameInput').value;
-let selectedMarkerType = 'pole';
-let selectedPoleType = 'HT';
+let selectedMarkerType = 'single_pole'; // Default to a pole marker
 let accuracy = null;
 let watchId = null;
 let startFromMarkerIndex = null;
 let startFromMarkerPosition = null;
+
+// New Dynamic State
+let selectedLineMainType = 'HT'; // HT or LT
+let selectedLineSubtype = 'HT_11kV'; // HT_33kV, LT_3P, etc.
+let selectedConductorType = 'ACSR_6_1_472'; // Key from conductorConfig
+let selectedSurveyType = 'proposed'; // NEW STATE: 'proposed' or 'existing'
 
 // Leaflet Map State
 let leafletMapInstance = null;
@@ -553,22 +642,44 @@ const INITIAL_FIX_TIMEOUT = 30000;
 let initialFixAttempt = false;
 let initialFixTimeoutId = null;
 
-const markerTypes = {
-pole: { label: 'Pole', icon: '💈', color: '#3b82f6' },
-dtr: { label: 'DTR', icon: '🟥', color: '#ef4444' },
-structure: { label: 'Structure', icon: '⭕', color: '#f59e0b' },
-other: { label: 'Other', icon: '❓', color: '#6b7280' } 
+// --- NEW CONFIGURATION DATA ---
+const lineConfig = {
+'HT_33kV': { label: '33 kV HT Line', color: '#dc2626', mainType: 'HT' },
+'HT_22kV': { label: '22 kV HT Line', color: '#f97316', mainType: 'HT' },
+'HT_11kV': { label: '11 kV HT Line', color: '#facc15', mainType: 'HT' },
+'LT_3P': { label: '3-phase LT Line', color: '#2563eb', mainType: 'LT' },
+'LT_2P': { label: '2-phase LT Line', color: '#059669', mainType: 'LT' },
+'LT_1P': { label: '1-phase LT Line', color: '#a855f7', mainType: 'LT' }
 };
 
-const poleTypes = {
-'HT': { label: 'HT (High Tension)', color: '#dc2626' },
-'LT-1P': { label: 'LT 1-phase', color: '#2563eb' },
-'LT-2P': { label: 'LT 2-phase', color: '#059669' },
-'LT-3P': { label: 'LT 3-phase', color: '#f59e0b' }
+const conductorConfig = {
+'ACSR_6_1_259': { label: 'Bare ACSR 6/1/2.59', group: 'Bare', color: '#6b7280' },
+'ACSR_6_1_335': { label: 'Bare ACSR 6/1/3.35', group: 'Bare', color: '#6b7280' },
+'ACSR_6_1_472': { label: 'Bare ACSR 6/1/4.72', group: 'Bare', color: '#6b7280' },
+'AAAC_7_250': { label: 'Bare AAAC 7/2.50', group: 'Bare', color: '#4b5563' },
+'AAAC_7_315': { label: 'Bare AAAC 7/3.15', group: 'Bare', color: '#4b5563' },
+'AAAC_7_381': { label: 'Bare AAAC 7/3.81', group: 'Bare', color: '#4b5563' },
+'AAAC_7_426': { label: 'Bare AAAC 7/4.26', group: 'Bare', color: '#4b5563' },
+'XLPE_35': { label: 'Insulated XLPE/AB Cable 35sqmm', group: 'Insulated', color: '#10b981' },
+'XLPE_50': { label: 'Insulated XLPE/AB Cable 50sqmm', group: 'Insulated', color: '#10b981' },
+'XLPE_70': { label: 'Insulated XLPE/AB Cable 70sqmm', group: 'Insulated', color: '#10b981' },
+'XLPE_95': { label: 'Insulated XLPE/AB Cable 95sqmm', group: 'Insulated', color: '#10b981' },
+'XLPE_120': { label: 'Insulated XLPE/AB Cable 120sqmm', group: 'Insulated', color: '#059669' },
+'XLPE_185': { label: 'Insulated XLPE/AB Cable 185sqmm', group: 'Insulated', color: '#059669' }
+};
+
+const markerConfig = {
+'dtr': { label: 'DTR', icon: '☢', mainType: ['HT', 'LT'], color: '#ef4444' },
+'single_pole': { label: 'Single Pole', icon: '◯', mainType: ['HT', 'LT'], color: '#3b82f6' },
+'double_pole': { label: 'Double Pole', icon: '◯◯', mainType: ['HT'], color: '#a855f7' },
+'three_pole': { label: '3-Pole', icon: '◰', mainType: ['HT'], color: '#f59e0b' }, // Using a simple structure icon
+'four_pole': { label: '4-Pole', icon: '◱', mainType: ['HT'], color: '#00704a' } // Using a simple structure icon
 };
 
 const gpsStatusElement = document.getElementById('gpsStatus');
-const poleTypeContainer = document.getElementById('poleTypeContainer');
+const markerTypeSelectionElement = document.getElementById('markerTypeSelection');
+const conductorTypeSelectElement = document.getElementById('conductorTypeSelect');
+
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
 const R = 6371e3;
@@ -614,6 +725,12 @@ function updateSiteName(name) {
 siteName = name;
 drawMap();
 updateUI(); 
+}
+
+function updateSurveyType(type) {
+    selectedSurveyType = type;
+    drawMap();
+    drawLeafletMap();
 }
 
 function startTracking() {
@@ -729,22 +846,93 @@ gpsStatusElement.textContent = 'Tracking stopped.';
 gpsStatusElement.style.color = '#6b7280';
 }
 
+function updateLineSubtype(subtype) {
+selectedLineSubtype = subtype;
+selectedLineMainType = lineConfig[subtype].mainType;
+updateMarkerSelectors();
+}
+
+function updateConductorType(conductorKey) {
+selectedConductorType = conductorKey;
+drawMap();
+drawLeafletMap();
+}
+
 function selectMarkerType(type) {
 selectedMarkerType = type;
 document.querySelectorAll('.marker-btn').forEach(btn => {
 btn.classList.remove('active');
 });
 event.target.closest('.marker-btn').classList.add('active');
-document.getElementById('markerTypeLabel').textContent = markerTypes[type].label;
-
-poleTypeContainer.style.display = (type === 'pole' || type === 'dtr') ? 'block' : 'none';
+document.getElementById('markerTypeLabel').textContent = markerConfig[type].label;
 }
 
-function updateSelectedPoleType(event) {
-if (event.target.name === 'poleType') {
-selectedPoleType = event.target.value;
+function updateMarkerSelectors() {
+markerTypeSelectionElement.innerHTML = ''; 
+let firstMarkerKey = null;
+
+for (const [key, config] of Object.entries(markerConfig)) {
+if (config.mainType.includes(selectedLineMainType)) {
+const isActive = (key === selectedMarkerType); 
+if (firstMarkerKey === null) {
+firstMarkerKey = key;
+selectedMarkerType = key; // Auto-select the first available marker
+document.getElementById('markerTypeLabel').textContent = config.label;
+}
+
+const button = document.createElement('button');
+button.className = `marker-btn ${isActive ? 'active' : ''}`;
+button.setAttribute('onclick', `selectMarkerType('${key}')`);
+button.innerHTML = `
+<div class="marker-icon">${config.icon}</div>
+<div class="marker-label">${config.label}</div>
+`;
+markerTypeSelectionElement.appendChild(button);
 }
 }
+
+if (!markerConfig[selectedMarkerType] || !markerConfig[selectedMarkerType].mainType.includes(selectedLineMainType)) {
+selectedMarkerType = firstMarkerKey || 'dtr'; 
+}
+
+// Re-render to ensure the newly active button is visually active
+document.querySelectorAll('.marker-btn').forEach(btn => {
+btn.classList.remove('active');
+if (btn.getAttribute('onclick').includes(`'${selectedMarkerType}'`)) {
+btn.classList.add('active');
+}
+});
+
+drawMap();
+drawLeafletMap();
+}
+
+function populateConductorType() {
+conductorTypeSelectElement.innerHTML = '';
+let currentGroup = null;
+
+for (const [key, config] of Object.entries(conductorConfig)) {
+if (config.group !== currentGroup) {
+const optgroup = document.createElement('optgroup');
+optgroup.label = config.group + ' Conductor';
+conductorTypeSelectElement.appendChild(optgroup);
+currentGroup = config.group;
+}
+
+const option = document.createElement('option');
+option.value = key;
+option.textContent = config.label;
+if (key === selectedConductorType) {
+option.selected = true;
+}
+conductorTypeSelectElement.lastElementChild.appendChild(option);
+}
+
+if (!selectedConductorType || !conductorConfig[selectedConductorType]) {
+selectedConductorType = Object.keys(conductorConfig)[0];
+}
+}
+
 
 function startFromMarker(id) {
 const markerIndex = markers.findIndex(m => m.id == id);
@@ -805,7 +993,7 @@ updateUI();
 drawMap(); 
 drawLeafletMap(); 
 
-gpsStatusElement.textContent = `Starting from Marker #${markerIndex + 1}. Current accuracy: ±${accuracy.toFixed(1)}m. Move to your new location and click "Add Pole".`;
+gpsStatusElement.textContent = `Starting from Marker #${markerIndex + 1}. Current accuracy: ±${accuracy.toFixed(1)}m. Move to your new location and click "Add ${markerConfig[selectedMarkerType].label}".`;
 gpsStatusElement.style.color = '#a855f7';
 },
 (error) => {
@@ -820,7 +1008,7 @@ maximumAge: 0
 }
 );
 } else {
-gpsStatusElement.textContent = `Starting from Marker #${markerIndex + 1}. Move to your new location and click "Add Pole".`;
+gpsStatusElement.textContent = `Starting from Marker #${markerIndex + 1}. Move to your new location and click "Add ${markerConfig[selectedMarkerType].label}".`;
 gpsStatusElement.style.color = '#a855f7';
 }
 
@@ -845,7 +1033,10 @@ return;
 const newMarker = {
 id: Date.now(),
 type: selectedMarkerType,
-poleType: (selectedMarkerType === 'pole' || selectedMarkerType === 'dtr') ? selectedPoleType : null,
+lineMainType: selectedLineMainType,
+lineSubtype: selectedLineSubtype,
+conductorType: selectedConductorType,
+surveyType: selectedSurveyType, // Include survey type in marker data
 lat: positionToUse.lat,
 lng: positionToUse.lng,
 timestamp: Date.now(),
@@ -943,8 +1134,9 @@ listCard.style.display = 'block';
 list.innerHTML = '';
 
 markers.forEach((marker, idx) => {
-const type = markerTypes[marker.type];
-const poleTypeInfo = marker.poleType ? `(${poleTypes[marker.poleType].label})` : '';
+const type = markerConfig[marker.type] || { label: 'Unknown', icon: '❓' };
+const lineInfo = lineConfig[marker.lineSubtype] || { label: 'Unknown Line', color: '#6b7280' };
+const conductorInfo = conductorConfig[marker.conductorType] || { label: 'Unknown Conductor' };
 
 let spanText = '';
 if (marker.isLineBreak && marker.startFromMarkerId && marker.spanLength > 0) {
@@ -965,7 +1157,7 @@ item.innerHTML = `
 <div class="marker-info">
 <div class="marker-item-icon">${type.icon}</div>
 <div class="marker-details">
-<h4>${type.label} #${idx + 1} ${poleTypeInfo} ${spanText}</h4>
+<h4>${type.label} #${idx + 1} (${lineInfo.label} / ${conductorInfo.label}) ${spanText}</h4>
 <div class="marker-coords">${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}</div>
 </div>
 </div>
@@ -1008,6 +1200,8 @@ ctx.fillStyle = '#1f2937';
 ctx.font = 'bold 18px Arial';
 ctx.textAlign = 'left';
 ctx.fillText(`Site: ${siteName}`, 10, 25);
+ctx.font = '14px Arial';
+ctx.fillText(`Survey Type: ${selectedSurveyType === 'proposed' ? 'Proposed Line Survey' : 'Existing Line Survey'}`, 10, 45); // Display survey type
 
 const pointsForBounds = [...markers, ...linePoints];
 
@@ -1081,6 +1275,11 @@ ctx.textAlign = 'right';
 ctx.fillText(`Grid: ${GRID_SIZE}m x ${GRID_SIZE}m`, width - 10, height - 10);
 }
 
+
+// --- Dotted/Solid Line Logic for Markers ---
+const isProposed = selectedSurveyType === 'proposed';
+const dashPattern = isProposed ? [10, 5] : []; 
+
 if (linePoints.length > 1) {
 ctx.strokeStyle = '#d1d5db'; 
 ctx.lineWidth = 1;
@@ -1101,37 +1300,34 @@ if (currentMarker.isLineBreak) {
 if (currentMarker.startFromMarkerId) {
 const startMarker = markers.find(m => m.id === currentMarker.startFromMarkerId);
 if (startMarker) {
-let spanColor = '#3b82f6';
-if (currentMarker.type === 'pole' || currentMarker.type === 'dtr') {
-spanColor = poleTypes[currentMarker.poleType] ? poleTypes[currentMarker.poleType].color : '#3b82f6';
-}
+const spanColor = lineConfig[currentMarker.lineSubtype] ? lineConfig[currentMarker.lineSubtype].color : '#3b82f6';
 
 ctx.strokeStyle = spanColor; 
 ctx.lineWidth = 3;
-ctx.setLineDash([10, 5]);
+ctx.setLineDash(dashPattern); // APPLY DASH PATTERN FOR JUMP
 ctx.beginPath();
 ctx.moveTo(toX(startMarker.lng), toY(startMarker.lat));
 ctx.lineTo(toX(currentMarker.lng), toY(currentMarker.lat));
 ctx.stroke();
-ctx.setLineDash([]);
+ctx.setLineDash([]); // Reset to solid
 }
 }
 continue; 
 }
 
-let spanColor = '#3b82f6';
-if (currentMarker.type === 'pole' || currentMarker.type === 'dtr') {
-spanColor = poleTypes[currentMarker.poleType] ? poleTypes[currentMarker.poleType].color : '#3b82f6';
-}
+const spanColor = lineConfig[currentMarker.lineSubtype] ? lineConfig[currentMarker.lineSubtype].color : '#3b82f6';
 
 ctx.strokeStyle = spanColor; 
 ctx.lineWidth = 3;
+ctx.setLineDash(dashPattern); // APPLY DASH PATTERN FOR MAIN LINE
 ctx.beginPath();
 ctx.moveTo(toX(prevMarker.lng), toY(prevMarker.lat));
 ctx.lineTo(toX(currentMarker.lng), toY(currentMarker.lat));
 ctx.stroke();
+ctx.setLineDash([]); // Reset to solid
 }
 }
+// --- End Dotted/Solid Line Logic ---
 
 if (startFromMarkerPosition && currentPosition) {
 ctx.strokeStyle = '#a855f7';
@@ -1161,14 +1357,16 @@ ctx.fillText(`${dist.toFixed(0)}m`, midX, midY);
 }
 
 markers.forEach((marker, idx) => {
-const type = markerTypes[marker.type];
+// ... (marker drawing logic remains the same)
+const type = markerConfig[marker.type] || { icon: '❓', color: '#6b7280' };
+const line = lineConfig[marker.lineSubtype] || { color: '#3b82f6' };
 const x = toX(marker.lng);
 const y = toY(marker.lat);
 const markerNumber = idx + 1;
 
-let markerColor = type.color;
-if (marker.type === 'pole' || marker.type === 'dtr') {
-markerColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : type.color;
+let markerColor = line.color; 
+if (marker.type === 'dtr') {
+markerColor = markerConfig.dtr.color;
 }
 
 ctx.strokeStyle = markerColor;
@@ -1195,10 +1393,7 @@ const prevY = toY(prevMarker.lat);
 const midX = (x + prevX) / 2;
 const midY = (y + prevY) / 2;
 
-let spanColor = '#3b82f6'; 
-if (marker.type === 'pole' || marker.type === 'dtr') {
-spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
+const spanColor = lineConfig[marker.lineSubtype] ? lineConfig[marker.lineSubtype].color : '#3b82f6';
 
 ctx.fillStyle = '#ffffff';
 ctx.fillRect(midX - 25, midY - 10, 50, 20); 
@@ -1216,10 +1411,7 @@ const startY = toY(startMarker.lat);
 const midX = (x + startX) / 2;
 const midY = (y + startY) / 2;
 
-let spanColor = '#3b82f6';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
+const spanColor = lineConfig[marker.lineSubtype] ? lineConfig[marker.lineSubtype].color : '#3b82f6';
 
 ctx.fillStyle = '#ffffff';
 ctx.fillRect(midX - 25, midY - 10, 50, 20);
@@ -1308,10 +1500,14 @@ leafletPolylines.forEach(p => p.remove());
 leafletPolylines = [];
 
 let segmentCoordinates = [];
-let currentSegmentColor = '#3b82f6';
+let currentSegmentColor = lineConfig[selectedLineSubtype] ? lineConfig[selectedLineSubtype].color : '#3b82f6';
+
+const isProposed = selectedSurveyType === 'proposed';
+const dashArray = isProposed ? '8, 8' : null; // Solid line if existing, dotted if proposed
 
 for (let i = 0; i < markers.length; i++) {
 const marker = markers[i];
+const markerLineConfig = lineConfig[marker.lineSubtype] || { color: '#3b82f6' };
 
 if (i > 0) {
 const prevMarker = markers[i - 1];
@@ -1319,17 +1515,14 @@ const prevMarker = markers[i - 1];
 if (!marker.isLineBreak) {
 segmentCoordinates.push([marker.lat, marker.lng]);
 
-let nextSegmentColor = '#3b82f6';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-nextSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
+let nextSegmentColor = markerLineConfig.color;
 
 if (nextSegmentColor !== currentSegmentColor || i === markers.length - 1) {
 const polyline = L.polyline(segmentCoordinates, {
 color: currentSegmentColor, 
 weight: 4,
 opacity: 1.0,
-dashArray: '8, 8'
+dashArray: dashArray // Apply line style
 }).addTo(leafletMapInstance);
 leafletPolylines.push(polyline);
 
@@ -1342,17 +1535,13 @@ currentSegmentColor = nextSegmentColor;
 if (marker.startFromMarkerId) {
 const startMarker = markers.find(m => m.id === marker.startFromMarkerId);
 if (startMarker) {
-let spanColor = '#3b82f6';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-spanColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
 const jumpLine = L.polyline(
 [[startMarker.lat, startMarker.lng], [marker.lat, marker.lng]],
 {
-color: spanColor,
+color: markerLineConfig.color,
 weight: 4,
 opacity: 1.0,
-dashArray: '10, 10'
+dashArray: dashArray // Apply line style for jump span
 }
 ).addTo(leafletMapInstance);
 leafletPolylines.push(jumpLine);
@@ -1360,17 +1549,11 @@ leafletPolylines.push(jumpLine);
 }
 
 segmentCoordinates = [[marker.lat, marker.lng]];
-if (marker.type === 'pole' || marker.type === 'dtr') {
-currentSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-} else {
-currentSegmentColor = '#3b82f6';
-}
+currentSegmentColor = markerLineConfig.color;
 }
 } else {
 segmentCoordinates.push([marker.lat, marker.lng]);
-if (marker.type === 'pole' || marker.type === 'dtr') {
-currentSegmentColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : '#3b82f6';
-}
+currentSegmentColor = markerLineConfig.color;
 }
 
 if (i === markers.length - 1 && segmentCoordinates.length > 1) {
@@ -1378,7 +1561,7 @@ const polyline = L.polyline(segmentCoordinates, {
 color: currentSegmentColor,
 weight: 4,
 opacity: 1.0,
-dashArray: '8, 8'
+dashArray: dashArray // Apply line style for final segment
 }).addTo(leafletMapInstance);
 leafletPolylines.push(polyline);
 }
@@ -1399,14 +1582,14 @@ leafletPolylines.push(previewLine);
 }
 
 markers.forEach((marker, idx) => {
-const type = markerTypes[marker.type];
+const type = markerConfig[marker.type] || { label: 'Unknown', icon: '❓' };
+const line = lineConfig[marker.lineSubtype] || { label: 'Unknown Line', color: '#3b82f6' };
+const conductor = conductorConfig[marker.conductorType] || { label: 'Unknown Conductor' };
 const markerNumber = idx + 1;
 
-let markerColor = type.color;
-let poleTypeLabel = '';
-if (marker.type === 'pole' || marker.type === 'dtr') {
-markerColor = poleTypes[marker.poleType] ? poleTypes[marker.poleType].color : type.color;
-poleTypeLabel = poleTypes[marker.poleType] ? ` - ${poleTypes[marker.poleType].label}` : '';
+let markerColor = line.color; 
+if (marker.type === 'dtr') {
+markerColor = markerConfig.dtr.color;
 }
 
 const spanText = (idx > 0 && marker.spanLength && !marker.isLineBreak) ? `${marker.spanLength.toFixed(0)}m Span` : (marker.isLineBreak && marker.spanLength > 0 ? `${marker.spanLength.toFixed(0)}m Span (Jump)` : marker.isLineBreak ? 'New Segment Start' : '');
@@ -1425,7 +1608,10 @@ title: `${type.label} #${markerNumber}`
 
 lMarker.bindPopup(`
 <div style="font-family: Arial; padding: 5px;">
-<strong>${type.label} #${markerNumber}${poleTypeLabel}</strong><br>
+<strong>${type.label} #${markerNumber}</strong><br>
+Survey: ${marker.surveyType === 'proposed' ? 'Proposed' : 'Existing'}<br>
+Line: ${line.label}<br>
+Conductor: ${conductor.label}<br>
 Lat: ${marker.lat.toFixed(6)}, Lng: ${marker.lng.toFixed(6)}<br>
 ${spanText}
 </div>
@@ -1471,18 +1657,22 @@ leafletMapInstance.setView(allLatLngs[0], 17);
 
 function saveToJSON() {
 const data = {
-version: '3.7',
+version: '3.8_dynamic',
 created: new Date().toISOString(),
 siteName: siteName, 
+surveyType: selectedSurveyType, // Save Survey Type
 totalDistance: totalDistance, 
 linePoints: linePoints,
 markers: markers.map((m, idx) => ({
 ...m,
 index: idx + 1,
-typeLabel: markerTypes[m.type].label,
-poleTypeLabel: m.poleType ? poleTypes[m.poleType].label : 'N/A',
+markerTypeLabel: (markerConfig[m.type] || {}).label || 'N/A',
+lineMainTypeLabel: (lineConfig[m.lineSubtype] || {}).mainType || 'N/A',
+lineSubtypeLabel: (lineConfig[m.lineSubtype] || {}).label || 'N/A',
+conductorTypeLabel: (conductorConfig[m.conductorType] || {}).label || 'N/A',
 spanLength: m.spanLength ? m.spanLength.toFixed(2) : 'N/A',
-isLineBreak: m.isLineBreak || false
+isLineBreak: m.isLineBreak || false,
+surveyType: m.surveyType || selectedSurveyType // Ensure survey type is saved
 }))
 };
 
@@ -1490,7 +1680,7 @@ const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v3-7-${Date.now()}.json`;
+a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-survey-v3-8-dynamic-${Date.now()}.json`;
 a.click();
 URL.revokeObjectURL(url);
 }
@@ -1505,17 +1695,42 @@ try {
 const data = JSON.parse(e.target.result);
 linePoints = data.linePoints || [];
 
+// Load survey type from data, default to 'proposed'
+selectedSurveyType = data.surveyType || 'proposed';
+document.querySelector(`input[name="surveyType"][value="${selectedSurveyType}"]`).checked = true;
+
+
 markers = (data.markers || []).map(m => ({
-...m,
-spanLength: m.spanLength ? parseFloat(m.spanLength) : 0,
-type: m.type || 'pole',
-poleType: m.poleType || (m.type === 'pole' || m.type === 'dtr' ? 'HT' : null),
-isLineBreak: m.isLineBreak || false, 
+id: m.id || Date.now(),
+type: m.type || 'single_pole',
+lineMainType: m.lineMainType || (m.lineSubtype || 'HT_11kV').split('_')[0],
+lineSubtype: m.lineSubtype || 'HT_11kV',
+conductorType: m.conductorType || 'ACSR_6_1_472',
+surveyType: m.surveyType || selectedSurveyType, // Ensure survey type is loaded/set
 lat: m.lat,
-lng: m.lng
+lng: m.lng,
+timestamp: m.timestamp || Date.now(),
+spanLength: m.spanLength ? parseFloat(m.spanLength) : 0,
+isLineBreak: m.isLineBreak || false,
+startFromMarkerId: m.startFromMarkerId || null
 })); 
 siteName = data.siteName || 'New Survey Site'; 
 document.getElementById('siteNameInput').value = siteName; 
+
+// Set current selection based on last marker or default
+if (markers.length > 0) {
+const lastMarker = markers[markers.length - 1];
+selectedLineSubtype = lastMarker.lineSubtype;
+selectedConductorType = lastMarker.conductorType;
+selectedMarkerType = lastMarker.type;
+
+// Update Radio Buttons and Dropdown
+document.querySelector(`input[name="lineType"][value="${selectedLineSubtype}"]`).checked = true;
+conductorTypeSelectElement.value = selectedConductorType;
+}
+
+// Initial setup to match loaded data
+updateLineSubtype(selectedLineSubtype); // This calls updateMarkerSelectors
 
 updateTotalDistance(); 
 updateUI();
@@ -1544,50 +1759,76 @@ pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
 
 pdfCtx.fillStyle = '#000000';
 pdfCtx.font = 'bold 24px Arial';
-pdfCtx.fillText('Electrical Line Survey Report (V3.7)', 50, 40);
+pdfCtx.fillText('Electrical Line Survey Report (V3.8 Dynamic)', 50, 40);
+
+const surveyTypeLabel = selectedSurveyType === 'proposed' ? 'Proposed Line Survey' : 'Existing Line Survey';
 
 pdfCtx.font = '14px Arial';
 pdfCtx.fillText(`Site Name: ${siteName}`, 50, 70); 
-pdfCtx.fillText(`Date: ${new Date().toLocaleDateString()}`, 50, 90);
-pdfCtx.fillText(`Total Distance: ${totalDistance.toFixed(2)} meters (Straight Line)`, 50, 110);
-pdfCtx.fillText(`Total Points: ${linePoints.length}`, 50, 130);
-pdfCtx.fillText(`Markers: ${markers.length}`, 50, 150);
+pdfCtx.fillText(`Survey Type: ${surveyTypeLabel}`, 50, 90); // ADDED SURVEY TYPE
+pdfCtx.fillText(`Date: ${new Date().toLocaleDateString()}`, 50, 110);
+pdfCtx.fillText(`Total Distance: ${totalDistance.toFixed(2)} meters (Straight Line)`, 50, 130);
+pdfCtx.fillText(`Total Points: ${linePoints.length}`, 50, 150);
+pdfCtx.fillText(`Markers: ${markers.length}`, 50, 170);
 
-pdfCtx.drawImage(canvas, 50, 170, 700, 500); 
+pdfCtx.drawImage(canvas, 50, 190, 700, 500); // Shifted down 20px
+
+let legendY = 700; // Adjusted starting Y
 
 pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Symbol Description', 550, 680);
-
-let legendY = 710;
-Object.values(markerTypes).forEach(type => {
-pdfCtx.font = '24px Arial';
-pdfCtx.fillText(type.icon, 560, legendY);
+pdfCtx.fillText('Line Type Color Legend:', 50, legendY);
+legendY += 20;
+Object.keys(lineConfig).forEach(key => {
+const ptype = lineConfig[key];
+pdfCtx.fillStyle = ptype.color;
+pdfCtx.fillRect(50, legendY - 10, 20, 10);
+pdfCtx.fillStyle = '#000000';
 pdfCtx.font = '14px Arial';
-pdfCtx.fillText(type.label, 600, legendY - 5);
+pdfCtx.fillText(ptype.label, 80, legendY);
+legendY += 20;
+});
+
+
+legendY += 10;
+pdfCtx.font = 'bold 16px Arial';
+pdfCtx.fillText('Symbol Description', 50, legendY);
+legendY += 30;
+
+Object.values(markerConfig).forEach(type => {
+pdfCtx.font = '24px Arial';
+pdfCtx.fillText(type.icon, 50, legendY);
+pdfCtx.font = '14px Arial';
+pdfCtx.fillText(type.label, 90, legendY - 5);
 legendY += 30;
 });
 
+legendY += 10;
 pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Span Color Legend (Line Type to End Marker):', 50, 710);
-let spanLegendY = 740;
-Object.values(poleTypes).forEach(ptype => {
-pdfCtx.fillStyle = ptype.color;
-pdfCtx.fillRect(50, spanLegendY - 10, 20, 10);
-pdfCtx.fillStyle = '#000000';
+pdfCtx.fillText('Conductor List (Used):', 50, legendY); // ENSURED CONDUCTOR TYPE IS INCLUDED
+legendY += 20;
+
+const usedConductors = [...new Set(markers.map(m => m.conductorType))];
+usedConductors.forEach(key => {
+const conductor = conductorConfig[key];
+if (conductor) {
 pdfCtx.font = '14px Arial';
-pdfCtx.fillText(ptype.label, 80, spanLegendY);
-spanLegendY += 20;
+pdfCtx.fillText(conductor.label, 50, legendY);
+legendY += 20;
+}
 });
 
 pdfCtx.font = 'bold 14px Arial';
-pdfCtx.fillText('GPS Coordinates & Span:', 50, spanLegendY + 20);
+let coordY = 700; // Adjusted starting Y
+pdfCtx.fillText('GPS Coordinates & Span:', 400, coordY);
 
-let coordY = spanLegendY + 50;
+coordY += 30;
 pdfCtx.font = '12px Arial';
 markers.forEach((marker, idx) => {
 if (coordY > 950) return;
-const type = markerTypes[marker.type];
-const pole = marker.poleType ? ` (${marker.poleType})` : '';
+const type = markerConfig[marker.type] || { label: 'Unknown' };
+const line = lineConfig[marker.lineSubtype] || { label: 'Unknown Line' };
+const conductor = conductorConfig[marker.conductorType] || { label: 'Unknown Conductor' };
+
 let span = '';
 if (marker.isLineBreak && marker.startFromMarkerId) {
 const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
@@ -1595,38 +1836,37 @@ span = ` (Jump Span: ${marker.spanLength.toFixed(0)}m from #${startMarkerIdx + 1
 } else if (marker.spanLength && !marker.isLineBreak) {
 span = ` (Span: ${marker.spanLength.toFixed(0)}m)`;
 } else if (marker.isLineBreak) {
-span = ' (LINE BREAK - No Connection)';
+span = ' (LINE BREAK)';
 }
 pdfCtx.fillText(
-`${idx + 1}. ${type.label}${pole}: ${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}${span}`,
-50,
+`${idx + 1}. ${type.label} (${line.label}): ${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}${span}`,
+400,
 coordY
 );
 coordY += 20;
 });
 
+
 pdfCtx.fillStyle = '#6b7280';
 pdfCtx.font = '10px Arial';
 pdfCtx.textAlign = 'center';
 
-// START: ADDED AND MODIFIED COPYRIGHT LINES IN PNG EXPORT
 pdfCtx.fillText(
 '© 2025–26 ErAjay Kumar . All rights reserved.',
 pdfCanvas.width / 2,
 980 
 );
 pdfCtx.fillText(
-'Developed for Professional Field Use | Survey App Version 3.7 | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com',
+'Developed for Professional Field Use | Survey App Version 3.8 Dynamic | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com',
 pdfCanvas.width / 2,
 990 
 );
-// END: ADDED AND MODIFIED COPYRIGHT LINES IN PNG EXPORT
 
 pdfCanvas.toBlob((blob) => {
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v3-7-${Date.now()}.png`;
+a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v3-8-dynamic-${Date.now()}.png`;
 a.click();
 URL.revokeObjectURL(url);
 alert('Report exported successfully as PNG image!');
@@ -1639,15 +1879,18 @@ function exportToCSV() {
     return;
   }
 
-  // Updated header: SiteName, SpanDescription first, then existing columns
-  let csvContent = "Site Name,Span Description,Marker #,Type,Pole Type,Latitude,Longitude,Span Length (m),Connected From Marker,Progressive Total Length (m),Line Break\n";
+  let csvContent = "Site Name,Survey Type,Span Description,Marker #,Type,Line Main Type,Line Subtype,Conductor Type,Latitude,Longitude,Span Length (m),Connected From Marker,Progressive Total Length (m),Line Break\n"; // ADDED Survey Type
 
   let cumulativeDistance = 0;
 
   markers.forEach((marker, idx) => {
     const markerNumber = idx + 1;
-    const typeLabel = markerTypes[marker.type].label;
-    const poleTypeLabel = marker.poleType ? poleTypes[marker.poleType].label : 'N/A';
+    const typeLabel = (markerConfig[marker.type] || {}).label || 'N/A';
+    const lineMainTypeLabel = marker.lineMainType || 'N/A';
+    const lineSubtypeLabel = (lineConfig[marker.lineSubtype] || {}).label || 'N/A';
+    const conductorTypeLabel = (conductorConfig[marker.conductorType] || {}).label || 'N/A';
+    const surveyTypeLabel = marker.surveyType === 'proposed' ? 'Proposed' : 'Existing';
+
     const span = marker.spanLength || 0; 
     const lat = marker.lat.toFixed(6);
     const lng = marker.lng.toFixed(6);
@@ -1655,17 +1898,23 @@ function exportToCSV() {
 
     let connectedFrom = '';
     if (marker.isLineBreak && marker.startFromMarkerId) {
+      const startMarker = markers.find(m => m.id === marker.startFromMarkerId);
       const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-      connectedFrom = `${markerTypes[markers[startMarkerIdx].type].label} #${startMarkerIdx + 1} (Jump)`;
+      connectedFrom = `${(markerConfig[startMarker.type] || {}).label} #${startMarkerIdx + 1} (Jump)`;
     } else if (!marker.isLineBreak && idx > 0) {
-      connectedFrom = `${markerTypes[markers[idx - 1].type].label} #${idx}`;
+      connectedFrom = `${(markerConfig[markers[idx - 1].type] || {}).label} #${idx}`;
     } else {
       connectedFrom = 'N/A';
     }
 
-    if (span > 0) {
-      cumulativeDistance += span;
+    if (span > 0 && !marker.isLineBreak) {
+      if (idx > 0 && markers[idx-1].lineSubtype === marker.lineSubtype) {
+        cumulativeDistance += span;
+      }
+    } else if (marker.isLineBreak && span > 0) {
+        cumulativeDistance += span;
     }
+
 
     const spanText = (idx === 0) ? '0.00' : span.toFixed(2);
 
@@ -1673,17 +1922,20 @@ function exportToCSV() {
     let spanDescription = "N/A";
     if (marker.isLineBreak && marker.startFromMarkerId && marker.spanLength > 0) {
       const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-      spanDescription = `${markerTypes[markers[startMarkerIdx].type].label} #${startMarkerIdx + 1} → ${typeLabel} #${idx + 1}`;
+      spanDescription = `${(markerConfig[markers[startMarkerIdx].type] || {}).label} #${startMarkerIdx + 1} → ${typeLabel} #${idx + 1}`;
     } else if (idx > 0 && marker.spanLength && !marker.isLineBreak) {
-      spanDescription = `${markerTypes[markers[idx - 1].type].label} #${idx} → ${typeLabel} #${idx + 1}`;
+      spanDescription = `${(markerConfig[markers[idx - 1].type] || {}).label} #${idx} → ${typeLabel} #${idx + 1}`;
     }
 
     const row = [
-      siteName,                // new first column
-      spanDescription,         // new second column
+      siteName,
+      surveyTypeLabel, // ADDED SURVEY TYPE
+      spanDescription,
       markerNumber,
       typeLabel,
-      poleTypeLabel,
+      lineMainTypeLabel,
+      lineSubtypeLabel,
+      conductorTypeLabel,
       lat,
       lng,
       spanText,
@@ -1699,14 +1951,31 @@ function exportToCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-data-v3-7-${Date.now()}.csv`;
+  a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-data-v3-8-dynamic-${Date.now()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   alert('Data exported successfully as CSV/Excel!');
 }
-drawMap();
-initLeafletMap();
-selectMarkerType(selectedMarkerType);
+
+// Initializations
+document.addEventListener('DOMContentLoaded', () => {
+    // Set default survey type
+    const defaultSurveyInput = document.querySelector('input[name="surveyType"][checked]');
+    if (defaultSurveyInput) {
+        selectedSurveyType = defaultSurveyInput.value;
+    }
+
+    // Select the default line type
+    const defaultLineInput = document.querySelector('input[name="lineType"][checked]');
+    if (defaultLineInput) {
+        selectedLineSubtype = defaultLineInput.value;
+        selectedLineMainType = defaultLineInput.getAttribute('data-main-type');
+    }
+    
+    populateConductorType();
+    updateMarkerSelectors();
+    initLeafletMap();
+});
 </script>
 
 </body>
