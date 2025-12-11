@@ -581,7 +581,10 @@ text-align: center;
 <input type="file" accept=".json" onchange="loadFromJSON(event)">
 </label>
 <button class="btn btn-purple" onclick="exportToPNG()">
-📄 Export PNG
+📄 Export Main PNG (A3)
+</button>
+<button class="btn btn-purple" onclick="exportToDetailedPNG()">
+📜 Export Details PNG (A3)
 </button>
 <button class="btn btn-blue" onclick="exportToCSV()">
 📊 Export CSV
@@ -1747,131 +1750,283 @@ reader.readAsText(file);
 event.target.value = '';
 }
 
+
 function exportToPNG() {
-const canvas = document.getElementById('mapCanvas');
-const pdfCanvas = document.createElement('canvas');
-const pdfCtx = pdfCanvas.getContext('2d');
-pdfCanvas.width = 800;
-pdfCanvas.height = 1000;
+    if (markers.length === 0) {
+        alert('No markers to export.');
+        return;
+    }
 
-pdfCtx.fillStyle = '#ffffff';
-pdfCtx.fillRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+    // A3 Dimensions (pixels at high resolution for printing)
+    const A3_WIDTH = 3000;
+    const A3_HEIGHT = 4242; 
+    const PADDING = 150;
+    const MAP_WIDTH = A3_WIDTH - 2 * PADDING;
+    const MAP_HEIGHT = MAP_WIDTH * (500/800); // Maintain map aspect ratio
+    const FONT_SCALE = 3.75; // 3000 / 800
 
-pdfCtx.fillStyle = '#000000';
-pdfCtx.font = 'bold 24px Arial';
-pdfCtx.fillText('Electrical Line Survey Report (V3.8 Dynamic)', 50, 40);
+    // Capture the current map canvas
+    const canvas = document.getElementById('mapCanvas');
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = A3_WIDTH;
+    tempCanvas.height = A3_HEIGHT; 
+    const pdfCanvas = tempCanvas;
+    const pdfCtx = pdfCanvas.getContext('2d');
 
-const surveyTypeLabel = selectedSurveyType === 'proposed' ? 'Proposed Line Survey' : 'Existing Line Survey';
+    pdfCtx.fillStyle = '#ffffff';
+    pdfCtx.fillRect(0, 0, A3_WIDTH, A3_HEIGHT);
 
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(`Site Name: ${siteName}`, 50, 70); 
-pdfCtx.fillText(`Survey Type: ${surveyTypeLabel}`, 50, 90); // ADDED SURVEY TYPE
-pdfCtx.fillText(`Date: ${new Date().toLocaleDateString()}`, 50, 110);
-pdfCtx.fillText(`Total Distance: ${totalDistance.toFixed(2)} meters (Straight Line)`, 50, 130);
-pdfCtx.fillText(`Total Points: ${linePoints.length}`, 50, 150);
-pdfCtx.fillText(`Markers: ${markers.length}`, 50, 170);
+    // --- Header Section ---
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${30 * FONT_SCALE}px Arial`;
+    pdfCtx.textAlign = 'center';
+    pdfCtx.fillText(siteName, A3_WIDTH / 2, 50 * FONT_SCALE);
 
-pdfCtx.drawImage(canvas, 50, 190, 700, 500); // Shifted down 20px
+    pdfCtx.font = `${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText(`Total Marked Points: ${markers.length} | Total Survey Distance: ${(totalDistance / 1000).toFixed(3)} km`, A3_WIDTH / 2, 75 * FONT_SCALE);
 
-let legendY = 700; // Adjusted starting Y
+    pdfCtx.fillStyle = '#3b82f6';
+    pdfCtx.fillRect(PADDING, 95 * FONT_SCALE, MAP_WIDTH, 5 * FONT_SCALE); 
 
-pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Line Type Color Legend:', 50, legendY);
-legendY += 20;
-Object.keys(lineConfig).forEach(key => {
-const ptype = lineConfig[key];
-pdfCtx.fillStyle = ptype.color;
-pdfCtx.fillRect(50, legendY - 10, 20, 10);
-pdfCtx.fillStyle = '#000000';
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(ptype.label, 80, legendY);
-legendY += 20;
-});
+    // --- Survey Info ---
+    let currentY = 125 * FONT_SCALE;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${18 * FONT_SCALE}px Arial`;
+    pdfCtx.textAlign = 'left';
+    pdfCtx.fillText('I. Survey Information:', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    pdfCtx.font = `${14 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText(`Type: ${selectedSurveyType === 'proposed' ? 'Proposed Line' : 'Existing Line'}`, PADDING, currentY);
+    currentY += 20 * FONT_SCALE;
+    pdfCtx.fillText(`Generated On: ${new Date().toLocaleString()}`, PADDING, currentY);
+    currentY += 20 * FONT_SCALE;
 
+    // --- Map Title ---
+    currentY += 10 * FONT_SCALE;
+    pdfCtx.font = `bold ${18 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('II. Survey Map (Schematic View):', PADDING, currentY);
+    currentY += 10 * FONT_SCALE;
 
-legendY += 10;
-pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Symbol Description', 50, legendY);
-legendY += 30;
+    const mapYStart = currentY; 
+    
+    // Draw the main map canvas
+    pdfCtx.drawImage(canvas, PADDING, mapYStart, MAP_WIDTH, MAP_HEIGHT);
 
-Object.values(markerConfig).forEach(type => {
-pdfCtx.font = '24px Arial';
-pdfCtx.fillText(type.icon, 50, legendY);
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(type.label, 90, legendY - 5);
-legendY += 30;
-});
+    // --- Legend Section (Two Columns) ---
+    let LEGEND_BLOCK_Y = mapYStart + MAP_HEIGHT + (30 * FONT_SCALE); // Start Y for the legend block
+    const LEGEND_X1 = PADDING;
+    const LEGEND_X2 = A3_WIDTH / 2; // Starting X for the second column
 
-legendY += 10;
-pdfCtx.font = 'bold 16px Arial';
-pdfCtx.fillText('Conductor List (Used):', 50, legendY); // ENSURED CONDUCTOR TYPE IS INCLUDED
-legendY += 20;
+    // --- Column 1: Line Type Color Legend ---
+    let lineY = LEGEND_BLOCK_Y;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('Line Type Color Legend:', LEGEND_X1, lineY);
+    lineY += 25 * FONT_SCALE;
 
-const usedConductors = [...new Set(markers.map(m => m.conductorType))];
-usedConductors.forEach(key => {
-const conductor = conductorConfig[key];
-if (conductor) {
-pdfCtx.font = '14px Arial';
-pdfCtx.fillText(conductor.label, 50, legendY);
-legendY += 20;
+    Object.keys(lineConfig).forEach(key => {
+        const ptype = lineConfig[key];
+        pdfCtx.fillStyle = ptype.color;
+        pdfCtx.fillRect(LEGEND_X1, lineY - (10 * FONT_SCALE), 20 * FONT_SCALE, 10 * FONT_SCALE);
+        pdfCtx.fillStyle = '#000000';
+        pdfCtx.font = `${14 * FONT_SCALE}px Arial`;
+        pdfCtx.fillText(ptype.label, LEGEND_X1 + (30 * FONT_SCALE), lineY);
+        lineY += 20 * FONT_SCALE;
+    });
+
+    // --- Column 2: Symbol Description ---
+    let symbolY = LEGEND_BLOCK_Y;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('Symbol Description:', LEGEND_X2, symbolY);
+    symbolY += 30 * FONT_SCALE;
+
+    Object.values(markerConfig).forEach(type => {
+        pdfCtx.font = `${24 * FONT_SCALE}px Arial`;
+        pdfCtx.fillText(type.icon, LEGEND_X2, symbolY);
+        pdfCtx.font = `${14 * FONT_SCALE}px Arial`;
+        pdfCtx.fillText(type.label, LEGEND_X2 + (40 * FONT_SCALE), symbolY - (5 * FONT_SCALE));
+        symbolY += 30 * FONT_SCALE;
+    });
+
+    // --- Data Note (Replaces Conductor List and GPS Coordinates/Span List) ---
+    // Ensure the message starts below the lowest part of the legends
+    let maxLegendY = Math.max(lineY, symbolY);
+    let messageY = maxLegendY + (40 * FONT_SCALE);
+
+    pdfCtx.font = `bold ${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.textAlign = 'left';
+    pdfCtx.fillText('III. Data Note:', PADDING, messageY);
+    messageY += 20 * FONT_SCALE;
+    pdfCtx.font = `italic ${14 * FONT_SCALE}px Arial`;
+    pdfCtx.fillStyle = '#6b7280';
+    pdfCtx.fillText('Detailed GPS Coordinates, Span lengths, and Conductor List are exclusively available in the exported CSV and JSON files.', PADDING, messageY);
+
+    // --- Footer Section ---
+    const footerY = A3_HEIGHT - (40 * FONT_SCALE);
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `${10 * FONT_SCALE}px Arial`;
+    pdfCtx.textAlign = 'center';
+    pdfCtx.fillText('Electrical Line Survey App | Version 3.8 (Dynamic) | Generated for A3 Print', A3_WIDTH / 2, footerY);
+    pdfCtx.fillText('© 2025–26 ErAjay Kumar . All rights reserved.', A3_WIDTH / 2, footerY + (10 * FONT_SCALE));
+    pdfCtx.fillText('Developed for Professional Field Use | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com', A3_WIDTH / 2, footerY + (20 * FONT_SCALE));
+
+    // --- Export ---
+    pdfCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v3-8-dynamic-A3-${Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Report exported successfully as A3 PNG image!');
+    });
 }
-});
 
-pdfCtx.font = 'bold 14px Arial';
-let coordY = 700; // Adjusted starting Y
-pdfCtx.fillText('GPS Coordinates & Span:', 400, coordY);
+function exportToDetailedPNG() {
+    if (markers.length === 0) {
+        alert('No markers to export.');
+        return;
+    }
 
-coordY += 30;
-pdfCtx.font = '12px Arial';
-markers.forEach((marker, idx) => {
-if (coordY > 950) return;
-const type = markerConfig[marker.type] || { label: 'Unknown' };
-const line = lineConfig[marker.lineSubtype] || { label: 'Unknown Line' };
-const conductor = conductorConfig[marker.conductorType] || { label: 'Unknown Conductor' };
+    // A3 Dimensions (pixels at high resolution for printing)
+    const A3_WIDTH = 3000;
+    const A3_HEIGHT = 4242; 
+    const PADDING = 150;
+    const MAP_WIDTH = A3_WIDTH - 2 * PADDING;
+    const MAP_HEIGHT = MAP_WIDTH * (500/800); 
+    const FONT_SCALE = 3.75; 
 
-let span = '';
-if (marker.isLineBreak && marker.startFromMarkerId) {
-const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-span = ` (Jump Span: ${marker.spanLength.toFixed(0)}m from #${startMarkerIdx + 1})`;
-} else if (marker.spanLength && !marker.isLineBreak) {
-span = ` (Span: ${marker.spanLength.toFixed(0)}m)`;
-} else if (marker.isLineBreak) {
-span = ' (LINE BREAK)';
+    // Capture the current map canvas
+    const canvas = document.getElementById('mapCanvas');
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = A3_WIDTH;
+    tempCanvas.height = A3_HEIGHT; 
+    const pdfCanvas = tempCanvas;
+    const pdfCtx = pdfCanvas.getContext('2d');
+
+    pdfCtx.fillStyle = '#ffffff';
+    pdfCtx.fillRect(0, 0, A3_WIDTH, A3_HEIGHT);
+
+    // --- Header Section ---
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${30 * FONT_SCALE}px Arial`;
+    pdfCtx.textAlign = 'center';
+    pdfCtx.fillText(`${siteName} - Detailed Report`, A3_WIDTH / 2, 50 * FONT_SCALE);
+
+    pdfCtx.font = `${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText(`Total Marked Points: ${markers.length} | Total Survey Distance: ${(totalDistance / 1000).toFixed(3)} km`, A3_WIDTH / 2, 75 * FONT_SCALE);
+
+    pdfCtx.fillStyle = '#3b82f6';
+    pdfCtx.fillRect(PADDING, 95 * FONT_SCALE, MAP_WIDTH, 5 * FONT_SCALE); 
+
+    // --- Survey Info ---
+    let currentY = 125 * FONT_SCALE;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${18 * FONT_SCALE}px Arial`;
+    pdfCtx.textAlign = 'left';
+    pdfCtx.fillText('I. Survey Information:', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    pdfCtx.font = `${14 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText(`Type: ${selectedSurveyType === 'proposed' ? 'Proposed Line' : 'Existing Line'}`, PADDING, currentY);
+    currentY += 20 * FONT_SCALE;
+    pdfCtx.fillText(`Generated On: ${new Date().toLocaleString()}`, PADDING, currentY);
+    currentY += 20 * FONT_SCALE;
+
+    // --- Map Title ---
+    currentY += 10 * FONT_SCALE;
+    pdfCtx.font = `bold ${18 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('II. Survey Map (Schematic View):', PADDING, currentY);
+    currentY += 10 * FONT_SCALE;
+
+    const mapYStart = currentY; 
+    
+    // Draw the main map canvas
+    pdfCtx.drawImage(canvas, PADDING, mapYStart, MAP_WIDTH, MAP_HEIGHT);
+    currentY = mapYStart + MAP_HEIGHT;
+
+    // --- Data Note (Replaces all detailed data) ---
+    currentY += 40 * FONT_SCALE;
+    pdfCtx.font = `bold ${18 * FONT_SCALE}px Arial`;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.textAlign = 'left';
+    pdfCtx.fillText('III. Detailed Survey Data:', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    pdfCtx.font = `italic ${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillStyle = '#ef4444';
+    pdfCtx.fillText('*** NOTE: Detailed GPS Coordinates, Conductor List, and Span-by-Span Data ***', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    pdfCtx.fillText('*** are intentionally omitted from this PNG report to maintain a concise overview and avoid file size issues. ***', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    pdfCtx.fillStyle = '#6b7280';
+    pdfCtx.fillText('Please use the exported **CSV** or **JSON** files for all tabular and detailed spatial data.', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    
+    // --- Legend (Simplified in Detailed Report) ---
+    currentY += 40 * FONT_SCALE;
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${18 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('IV. Legend:', PADDING, currentY);
+    currentY += 25 * FONT_SCALE;
+    
+    // Using the same two-column structure as the main PNG
+    let lineY = currentY;
+    let symbolY = currentY;
+    const LEGEND_X2 = A3_WIDTH / 2;
+
+    // Column 1: Line Type Color Legend
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('Line Type Color Legend:', PADDING, lineY);
+    lineY += 25 * FONT_SCALE;
+
+    Object.keys(lineConfig).forEach(key => {
+        const ptype = lineConfig[key];
+        pdfCtx.fillStyle = ptype.color;
+        pdfCtx.fillRect(PADDING, lineY - (10 * FONT_SCALE), 20 * FONT_SCALE, 10 * FONT_SCALE);
+        pdfCtx.fillStyle = '#000000';
+        pdfCtx.font = `${14 * FONT_SCALE}px Arial`;
+        pdfCtx.fillText(ptype.label, PADDING + (30 * FONT_SCALE), lineY);
+        lineY += 20 * FONT_SCALE;
+    });
+
+    // Column 2: Symbol Description 
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `bold ${16 * FONT_SCALE}px Arial`;
+    pdfCtx.fillText('Symbol Description:', LEGEND_X2, symbolY);
+    symbolY += 30 * FONT_SCALE;
+
+    Object.values(markerConfig).forEach(type => {
+        pdfCtx.font = `${24 * FONT_SCALE}px Arial`;
+        pdfCtx.fillText(type.icon, LEGEND_X2, symbolY);
+        pdfCtx.font = `${14 * FONT_SCALE}px Arial`;
+        pdfCtx.fillText(type.label, LEGEND_X2 + (40 * FONT_SCALE), symbolY - (5 * FONT_SCALE));
+        symbolY += 30 * FONT_SCALE;
+    });
+    
+    // --- Footer Section ---
+    const footerY = A3_HEIGHT - (40 * FONT_SCALE);
+    pdfCtx.fillStyle = '#1f2937';
+    pdfCtx.font = `${10 * FONT_SCALE}px Arial`;
+    pdfCtx.textAlign = 'center';
+    pdfCtx.fillText('Electrical Line Survey App | Version 3.8 (Dynamic) | Generated for A3 Print', A3_WIDTH / 2, footerY);
+    pdfCtx.fillText('© 2025–26 ErAjay Kumar . All rights reserved.', A3_WIDTH / 2, footerY + (10 * FONT_SCALE));
+    pdfCtx.fillText('Developed for Professional Field Use | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com', A3_WIDTH / 2, footerY + (20 * FONT_SCALE));
+
+    // --- Export ---
+    pdfCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-detailed-report-v3-8-dynamic-A3-${Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Detailed report exported successfully as A3 PNG image!');
+    });
 }
-pdfCtx.fillText(
-`${idx + 1}. ${type.label} (${line.label}): ${marker.lat.toFixed(6)}, ${marker.lng.toFixed(6)}${span}`,
-400,
-coordY
-);
-coordY += 20;
-});
 
 
-pdfCtx.fillStyle = '#6b7280';
-pdfCtx.font = '10px Arial';
-pdfCtx.textAlign = 'center';
-
-pdfCtx.fillText(
-'© 2025–26 ErAjay Kumar . All rights reserved.',
-pdfCanvas.width / 2,
-980 
-);
-pdfCtx.fillText(
-'Developed for Professional Field Use | Survey App Version 3.8 Dynamic | For technical support, contact +91-70187-56182/ErAjay.HPSEB@gmail.com',
-pdfCanvas.width / 2,
-990 
-);
-
-pdfCanvas.toBlob((blob) => {
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `${siteName.replace(/[^a-z0-9]/gi, '_')}-report-v3-8-dynamic-${Date.now()}.png`;
-a.click();
-URL.revokeObjectURL(url);
-alert('Report exported successfully as PNG image!');
-});
-}
 
 function exportToCSV() {
   if (markers.length === 0) {
@@ -1922,9 +2077,9 @@ function exportToCSV() {
     let spanDescription = "N/A";
     if (marker.isLineBreak && marker.startFromMarkerId && marker.spanLength > 0) {
       const startMarkerIdx = markers.findIndex(m => m.id === marker.startFromMarkerId);
-      spanDescription = `${(markerConfig[markers[startMarkerIdx].type] || {}).label} #${startMarkerIdx + 1} → ${typeLabel} #${idx + 1}`;
+      spanDescription = `${(markerConfig[markers[startMarkerIdx].type] || {}).label} #${startMarkerIdx + 1} --> ${typeLabel} #${idx + 1}`;
     } else if (idx > 0 && marker.spanLength && !marker.isLineBreak) {
-      spanDescription = `${(markerConfig[markers[idx - 1].type] || {}).label} #${idx} → ${typeLabel} #${idx + 1}`;
+      spanDescription = `${(markerConfig[markers[idx - 1].type] || {}).label} #${idx} --> ${typeLabel} #${idx + 1}`;
     }
 
     const row = [
